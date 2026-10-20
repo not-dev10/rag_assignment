@@ -10,17 +10,11 @@ interface AppShellProps {
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-canvas-bg text-on-surface antialiased">
-      {/* Fixed Sidebar */}
+    <div className="min-h-screen bg-zinc-50/50 text-zinc-900">
       <Sidebar />
-
-      {/* Main Content Area offset by Sidebar */}
-      <div className="pl-72">
-        {/* Fixed Top Header */}
+      <div className="pl-60">
         <Header />
-
-        {/* Dynamic Route Content */}
-        <main className="w-full pt-16 min-h-screen bg-canvas-bg px-8 py-6">
+        <main className="pt-14 min-h-screen p-6 max-w-6xl mx-auto">
           {children}
         </main>
       </div>

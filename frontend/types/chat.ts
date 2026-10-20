@@ -6,29 +6,16 @@ export interface Citation {
   pageNumber?: number;
   sectionTitle?: string;
   excerpt: string;
-  similarityScore: number;
-  tokenRange?: string;
+  relevanceScore?: number;
 }
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant';
   content: string;
   timestamp: string;
   citations?: Citation[];
-  groundingStatus?: 'strict' | 'partial' | 'fallback';
-  groundingScore?: number;
-  tokenCount?: number;
+  isFallback?: boolean;
+  retrievalContext?: string;
   latencyMs?: number;
-  model?: string;
-}
-
-export interface ThreadSession {
-  id: string;
-  title: string;
-  sourceCount: number;
-  groundingPercentage: number;
-  lastUpdated: string;
-  pinned: boolean;
-  collectionScope: string;
 }

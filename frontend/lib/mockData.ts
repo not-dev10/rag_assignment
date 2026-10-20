@@ -1,250 +1,146 @@
-import { ChatMessage, ThreadSession, Citation } from '@/types/chat';
+import { ChatMessage, Citation } from '@/types/chat';
 import { DocumentItem } from '@/types/document';
-import { KnowledgeCollection, SemanticSearchResult } from '@/types/collection';
+import { EvalTestCase } from '@/types/eval';
+import { RAGSettings } from '@/types/settings';
 
-export const mockCollections: KnowledgeCollection[] = [
+export const defaultSettings: RAGSettings = {
+  llmProvider: 'anthropic',
+  llmModel: 'claude-3-5-sonnet-20241022',
+  embeddingModel: 'text-embedding-3-large',
+  qdrantUrl: 'http://localhost:6333',
+  qdrantCollection: 'knowledge_chunks',
+  qdrantApiKey: '',
+  topK: 4,
+  similarityThreshold: 0.75,
+  chunkTokens: 512,
+  chunkOverlap: 50,
+};
+
+export const sampleDocuments: DocumentItem[] = [
   {
-    id: 'col-1',
-    name: 'Enterprise Core & Compliance',
-    description: 'Default corpus for company-wide executive assistants, standard operating procedures, and global regulatory frameworks.',
-    documentCount: 420,
-    chunkCount: 14850,
-    status: 'synced',
-    lastSynced: '12m ago',
-    icon: 'policy',
-    isPrimary: true,
-    embeddingModel: 'text-embedding-3-large',
-    storageSizeMb: 184.2,
+    id: 'doc-1',
+    filename: 'employee_handbook.pdf',
+    mimeType: 'application/pdf',
+    sizeBytes: 1420000,
+    chunkCount: 24,
+    stage: 'indexed',
+    uploadedAt: '2026-10-18 14:20',
+    rawTextPreview: `EMPLOYEE POLICIES & BENEFITS HANDBOOK
+Section 3: Leave Policies
+3.1 Annual Leave:
+Employees accrue 20 days of paid annual leave per calendar year. Leave requests must be submitted through the internal employee portal at least 5 business days in advance. A maximum of 5 unused days may be carried over to the following year.
+3.2 Sick Leave:
+Employees receive up to 10 days of paid sick leave annually. Medical documentation is required for continuous absences exceeding 3 business days.`,
   },
   {
-    id: 'col-2',
-    name: 'Engineering & Architecture Specs',
-    description: 'Cloud microservices architecture, internal API contracts, RFCs, and Qdrant cluster topology specs.',
-    documentCount: 615,
-    chunkCount: 22140,
-    status: 'synced',
-    lastSynced: '1h ago',
-    icon: 'terminal',
-    isPrimary: false,
-    embeddingModel: 'text-embedding-3-large',
-    storageSizeMb: 245.8,
+    id: 'doc-2',
+    filename: 'architecture_overview.md',
+    mimeType: 'text/markdown',
+    sizeBytes: 48000,
+    chunkCount: 8,
+    stage: 'indexed',
+    uploadedAt: '2026-10-19 09:12',
+    rawTextPreview: `# Architecture Specification
+## Service Boundaries
+1. Next.js Frontend: Presentation, chat state, citation inspection.
+2. Node.js API: Public gateway, file validation, rate limiting.
+3. Python AI Microservice: Text extraction, semantic chunking, embeddings generation, vector storage in Qdrant, and generation.
+Vector store: Qdrant vector database running on port 6333.`,
   },
   {
-    id: 'col-3',
-    name: 'HR & Employee Handbooks',
-    description: 'Global benefits, leave policies, security clearances, and onboarding documentation for distributed teams.',
-    documentCount: 393,
-    chunkCount: 11229,
-    status: 'synced',
-    lastSynced: '3h ago',
-    icon: 'badge',
-    isPrimary: false,
-    embeddingModel: 'text-embedding-3-large',
-    storageSizeMb: 98.4,
+    id: 'doc-3',
+    filename: 'qdrant_indexing_notes.txt',
+    mimeType: 'text/plain',
+    sizeBytes: 18000,
+    chunkCount: 4,
+    stage: 'indexed',
+    uploadedAt: '2026-10-20 11:45',
+    rawTextPreview: `Qdrant Index Configuration:
+- Distance metric: Cosine
+- Vector dimension: 3072 (compatible with text-embedding-3-large)
+- Payload schema: document_id, filename, chunk_index, page_number, section_title, text, content_hash.`,
   },
 ];
 
-export const mockThreadSessions: ThreadSession[] = [
-  {
-    id: 'thread-1',
-    title: 'EU AI Act High-Risk Requirements',
-    sourceCount: 3,
-    groundingPercentage: 98,
-    lastUpdated: '10m ago',
-    pinned: true,
-    collectionScope: 'Enterprise Core & Compliance',
-  },
-  {
-    id: 'thread-2',
-    title: 'Hybrid vs Dense Vector Benchmarks',
-    sourceCount: 5,
-    groundingPercentage: 94,
-    lastUpdated: 'Yesterday',
-    pinned: false,
-    collectionScope: 'Engineering & Architecture Specs',
-  },
-  {
-    id: 'thread-3',
-    title: 'SOC2 Type II Access Audit Controls',
-    sourceCount: 4,
-    groundingPercentage: 99,
-    lastUpdated: '2 days ago',
-    pinned: false,
-    collectionScope: 'Enterprise Core & Compliance',
-  },
-  {
-    id: 'thread-4',
-    title: 'Annual Leave Policy & Carry-over Limits',
-    sourceCount: 2,
-    groundingPercentage: 100,
-    lastUpdated: '3 days ago',
-    pinned: false,
-    collectionScope: 'HR & Employee Handbooks',
-  },
-];
-
-export const mockCitations: Citation[] = [
+export const sampleCitations: Citation[] = [
   {
     id: 'cite-1',
     documentId: 'doc-1',
-    filename: 'EU_AI_Act_Final_Draft_2024.pdf',
-    chunkIndex: 142,
-    pageNumber: 48,
-    sectionTitle: 'Article 6: Classification Rules for High-Risk AI Systems',
-    similarityScore: 0.94,
-    tokenRange: 'Tokens 384–896',
-    excerpt: 'High-risk AI systems pursuant to Article 6(2) shall establish, implement, document and maintain a continuous risk management system throughout the entire lifecycle of the AI system. The risk management system shall identify and analyse known and foreseeable risks...',
+    filename: 'employee_handbook.pdf',
+    chunkIndex: 3,
+    pageNumber: 12,
+    sectionTitle: 'Section 3.1: Annual Leave Requests',
+    excerpt: 'Leave requests must be submitted through the internal employee portal at least 5 business days in advance. A maximum of 5 unused days may be carried over to the following year.',
+    relevanceScore: 0.91,
   },
   {
     id: 'cite-2',
     documentId: 'doc-1',
-    filename: 'EU_AI_Act_Final_Draft_2024.pdf',
-    chunkIndex: 145,
-    pageNumber: 52,
-    sectionTitle: 'Article 9: Risk Mitigation & Human Oversight',
-    similarityScore: 0.89,
-    tokenRange: 'Tokens 120–480',
-    excerpt: 'Appropriate human oversight measures shall be designed into high-risk AI systems to enable deployers to prevent or minimise operational risks, override automated outputs, and trigger manual fail-safes when anomalous behavior is detected.',
-  },
-  {
-    id: 'cite-3',
-    documentId: 'doc-2',
-    filename: 'SOC2_Type_II_Security_Policy.md',
-    chunkIndex: 78,
-    sectionTitle: 'Section 4.3: Automated Decision Auditing',
-    similarityScore: 0.84,
-    tokenRange: 'Tokens 210–540',
-    excerpt: 'All automated reasoning and inference pipelines processing customer data must maintain immutable trace logs including prompt vectors, retrieval candidate IDs, and generated response hashes for a minimum period of 365 days.',
+    filename: 'employee_handbook.pdf',
+    chunkIndex: 4,
+    pageNumber: 13,
+    sectionTitle: 'Section 3.2: Sick Leave Documentation',
+    excerpt: 'Employees receive up to 10 days of paid sick leave annually. Medical documentation is required for continuous absences exceeding 3 business days.',
+    relevanceScore: 0.84,
   },
 ];
 
-export const mockInitialMessages: ChatMessage[] = [
+export const initialChatMessages: ChatMessage[] = [
   {
     id: 'msg-1',
     role: 'user',
-    content: 'What are the mandatory compliance obligations for deploying high-risk AI systems under the latest regulatory framework?',
-    timestamp: '10:42 AM',
+    content: 'How do I submit an annual leave request, and how many days can I carry over?',
+    timestamp: '10:14 AM',
   },
   {
     id: 'msg-2',
     role: 'assistant',
-    content: `Based on the indexed regulatory documents, deployers and providers of high-risk AI systems must adhere to four core statutory obligations:
+    content: `According to the employee handbook, annual leave requests must be submitted through the internal employee portal at least 5 business days in advance [1]. 
 
-1. **Continuous Risk Management System**:
-Pursuant to Article 6(2), organizations must maintain a documented, iterative risk management process across the complete system lifecycle [Doc 1.1].
-
-2. **Data Governance & Bias Mitigation**:
-Training, validation, and testing datasets must satisfy strict quality benchmarks, including transparency audits for statistical bias [Doc 1.1].
-
-3. **Human Oversight & Override Capabilities**:
-Systems must incorporate verifiable operational guardrails allowing authorized human supervisors to intercept, override, or halt automated inferences in real-time [Doc 1.2].
-
-4. **Immutable Audit Trails**:
-In accordance with internal compliance protocols, all automated reasoning chains, retrieval chunk IDs, and model telemetry must be logged and preserved for audit inspection [Doc 2.1].`,
-    timestamp: '10:42 AM',
-    groundingStatus: 'strict',
-    groundingScore: 0.96,
-    tokenCount: 428,
-    latencyMs: 342,
-    model: 'Claude 3.5 Sonnet + text-embedding-3-large',
-    citations: mockCitations,
+Employees accrue 20 days of paid annual leave per calendar year, and a maximum of 5 unused days may be carried over into the following year [1].`,
+    timestamp: '10:14 AM',
+    citations: [sampleCitations[0]],
+    retrievalContext: `[Context 1] Source: employee_handbook.pdf (Page 12, Section 3.1)
+"Employees accrue 20 days of paid annual leave per calendar year. Leave requests must be submitted through the internal employee portal at least 5 business days in advance. A maximum of 5 unused days may be carried over to the following year."`,
+    latencyMs: 312,
   },
 ];
 
-export const mockDocuments: DocumentItem[] = [
+export const defaultEvalTestCases: EvalTestCase[] = [
   {
-    id: 'doc-1',
-    filename: 'EU_AI_Act_Final_Draft_2024.pdf',
-    mimeType: 'application/pdf',
-    sizeBytes: 4820000,
-    chunkCount: 284,
-    status: 'indexed',
-    uploadedAt: 'Today, 09:15 AM',
-    collectionId: 'col-1',
-    collectionName: 'Enterprise Core & Compliance',
-    author: 'Legal Ops',
+    id: 'test-1',
+    scenarioId: 'T01',
+    name: 'Grounded Query: Annual Leave Procedure',
+    query: 'How do I submit an annual leave request?',
+    expectedOutcome: 'grounded',
+    status: 'idle',
+    notes: 'Should answer with employee portal procedure and cite employee_handbook.pdf',
   },
   {
-    id: 'doc-2',
-    filename: 'SOC2_Type_II_Security_Policy.md',
-    mimeType: 'text/markdown',
-    sizeBytes: 420000,
-    chunkCount: 88,
-    status: 'indexed',
-    uploadedAt: 'Yesterday, 04:30 PM',
-    collectionId: 'col-1',
-    collectionName: 'Enterprise Core & Compliance',
-    author: 'Infosec Team',
+    id: 'test-2',
+    scenarioId: 'T01',
+    name: 'Grounded Query: Qdrant Vector Dimension',
+    query: 'What vector dimension is configured for Qdrant in the notes?',
+    expectedOutcome: 'grounded',
+    status: 'idle',
+    notes: 'Should answer 3072 dimensions citing qdrant_indexing_notes.txt',
   },
   {
-    id: 'doc-3',
-    filename: 'Qdrant_Vector_Cluster_Topology.pdf',
-    mimeType: 'application/pdf',
-    sizeBytes: 12500000,
-    chunkCount: 612,
-    status: 'indexed',
-    uploadedAt: 'Oct 18, 2026',
-    collectionId: 'col-2',
-    collectionName: 'Engineering & Architecture Specs',
-    author: 'Platform Lead',
+    id: 'test-3',
+    scenarioId: 'T02',
+    name: 'Unanswerable Query: External Weather',
+    query: 'What is the current temperature in Paris today?',
+    expectedOutcome: 'fallback',
+    status: 'idle',
+    notes: 'Should abstain honestly with fallback message; no hallucinations',
   },
   {
-    id: 'doc-4',
-    filename: 'Employee_Leave_And_Benefits_2025.pdf',
-    mimeType: 'application/pdf',
-    sizeBytes: 1840000,
-    chunkCount: 76,
-    status: 'indexed',
-    uploadedAt: 'Oct 15, 2026',
-    collectionId: 'col-3',
-    collectionName: 'HR & Employee Handbooks',
-    author: 'People Ops',
-  },
-  {
-    id: 'doc-5',
-    filename: 'API_Gateway_Specification_v4.json',
-    mimeType: 'application/json',
-    sizeBytes: 890000,
-    chunkCount: 142,
-    status: 'processing',
-    uploadedAt: '5m ago',
-    collectionId: 'col-2',
-    collectionName: 'Engineering & Architecture Specs',
-    author: 'API Working Group',
-  },
-];
-
-export const mockSearchResults: SemanticSearchResult[] = [
-  {
-    id: 'sr-1',
-    documentName: 'EU_AI_Act_Final_Draft_2024.pdf',
-    collectionName: 'Enterprise Core & Compliance',
-    chunkIndex: 142,
-    similarityScore: 0.948,
-    pageNumber: 48,
-    sectionTitle: 'Article 6: High-Risk Classification Rules',
-    tokenCount: 420,
-    matchedText: 'High-risk AI systems shall establish, implement, document and maintain a continuous risk management system throughout the entire lifecycle of the AI system.',
-  },
-  {
-    id: 'sr-2',
-    documentName: 'EU_AI_Act_Final_Draft_2024.pdf',
-    collectionName: 'Enterprise Core & Compliance',
-    chunkIndex: 145,
-    similarityScore: 0.892,
-    pageNumber: 52,
-    sectionTitle: 'Article 9: Risk Mitigation & Human Oversight',
-    tokenCount: 310,
-    matchedText: 'Appropriate human oversight measures shall be designed into high-risk AI systems to enable deployers to prevent or minimise operational risks.',
-  },
-  {
-    id: 'sr-3',
-    documentName: 'SOC2_Type_II_Security_Policy.md',
-    collectionName: 'Enterprise Core & Compliance',
-    chunkIndex: 78,
-    similarityScore: 0.841,
-    sectionTitle: 'Section 4.3: Automated Decision Auditing',
-    tokenCount: 290,
-    matchedText: 'All automated reasoning and inference pipelines processing customer data must maintain immutable trace logs including prompt vectors and retrieval candidate IDs.',
+    id: 'test-4',
+    scenarioId: 'T03',
+    name: 'Validation Error: Blank Whitespace Query',
+    query: '    ',
+    expectedOutcome: 'validation_error',
+    status: 'idle',
+    notes: 'Must perform inline/client validation without executing LLM call',
   },
 ];

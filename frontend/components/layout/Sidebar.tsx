@@ -3,91 +3,82 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import {
+  MessageSquare,
+  Files,
+  FileSearch,
+  CheckCircle2,
+  Settings,
+} from 'lucide-react';
 
 interface NavItem {
   name: string;
   href: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 const navItems: NavItem[] = [
-  { name: 'Overview', href: '/', icon: 'home' },
-  { name: 'AI Chat', href: '/chat', icon: 'auto_awesome' },
-  { name: 'Documents', href: '/documents', icon: 'folder' },
-  { name: 'Collections', href: '/collections', icon: 'layers' },
-  { name: 'Semantic Search', href: '/search', icon: 'saved_search' },
+  { name: 'Chat', href: '/', icon: MessageSquare },
+  { name: 'Documents', href: '/documents', icon: Files },
+  { name: 'Retrieval Inspector', href: '/inspector', icon: FileSearch },
+  { name: 'Evaluation', href: '/eval', icon: CheckCircle2 },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    if (href === '/') return pathname === '/' || pathname === '/overview';
+    if (href === '/') return pathname === '/' || pathname === '/chat';
     return pathname.startsWith(href);
   };
 
   return (
-    <aside className="fixed left-4 top-4 bottom-4 w-64 bg-surface-card rounded-xl shadow-[0_1px_3px_0_rgba(16,24,40,0.04),0_1px_2px_-1px_rgba(16,24,40,0.02)] z-50 flex flex-col p-4 border border-border-subtle">
-      {/* Brand & Engine Identifier */}
-      <div className="flex items-center gap-3 px-3 py-2 mb-6">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-bold text-sm tracking-wider shadow-sm">
-          RS
+    <aside className="fixed left-0 top-0 bottom-0 w-60 bg-white border-r border-zinc-200 z-30 flex flex-col">
+      {/* Brand Header */}
+      <div className="h-14 px-5 flex items-center gap-2.5 border-b border-zinc-200">
+        <div className="w-6 h-6 rounded bg-zinc-900 flex items-center justify-center text-white font-semibold text-xs">
+          R
         </div>
         <div className="flex flex-col">
-          <span className="text-base text-primary tracking-tight font-semibold">RAGSpace</span>
-          <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider">
-            Vector Engine
+          <span className="text-sm font-semibold tracking-tight text-zinc-900">
+            RAG Assistant
           </span>
         </div>
       </div>
 
-      {/* Section Label */}
-      <div className="px-3 mb-2">
-        <span className="text-[11px] text-on-surface-variant font-medium uppercase tracking-wider">
-          Workspace
-        </span>
-      </div>
-
-      {/* Nav Links */}
-      <nav className="flex-1 flex flex-col gap-1">
+      {/* Navigation */}
+      <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item) => {
           const active = isActive(item.href);
+          const Icon = item.icon;
+
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-full transition-all text-sm font-medium ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 active
-                  ? 'bg-primary text-on-primary shadow-sm'
-                  : 'text-on-surface-variant hover:bg-canvas-bg hover:text-on-surface'
+                  ? 'bg-zinc-100 text-zinc-900 font-semibold'
+                  : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+              <Icon className={`w-4 h-4 ${active ? 'text-zinc-900' : 'text-zinc-500'}`} />
               <span>{item.name}</span>
             </Link>
           );
         })}
-
-        <div className="my-3 border-t border-border-subtle" />
-
-        <Link
-          href="#settings"
-          className="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-on-surface-variant hover:bg-canvas-bg hover:text-on-surface transition-all text-sm font-medium"
-        >
-          <span className="material-symbols-outlined text-[20px]">settings</span>
-          <span>Settings</span>
-        </Link>
       </nav>
 
-      {/* Bottom Health & Latency Telemetry */}
-      <div className="mt-auto p-3 rounded-lg bg-surface-container-low border border-border-subtle flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-status-indexed-text animate-pulse" />
-          <span className="text-[11px] text-on-surface-variant font-medium">v2.4 Online</span>
+      {/* Connection Indicator */}
+      <div className="p-3 border-t border-zinc-200">
+        <div className="px-3 py-2 rounded-md bg-zinc-50 border border-zinc-200/60 flex items-center justify-between text-xs text-zinc-600">
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-600" />
+            <span>Qdrant Local</span>
+          </span>
+          <span className="font-mono text-[11px] text-zinc-500">:6333</span>
         </div>
-        <span className="text-[11px] text-accent-sky-text bg-accent-sky-bg px-2 py-0.5 rounded border border-accent-sky-border font-mono font-medium">
-          42ms
-        </span>
       </div>
     </aside>
   );

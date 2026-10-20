@@ -1,4 +1,4 @@
-export type DocumentStatus = 'indexed' | 'processing' | 'failed';
+export type IngestionStage = 'uploaded' | 'parsed' | 'chunked' | 'embedded' | 'indexed' | 'failed';
 
 export interface DocumentItem {
   id: string;
@@ -6,17 +6,14 @@ export interface DocumentItem {
   mimeType: string;
   sizeBytes: number;
   chunkCount: number;
-  status: DocumentStatus;
+  stage: IngestionStage;
   uploadedAt: string;
-  collectionId: string;
-  collectionName: string;
+  rawTextPreview?: string;
   errorMessage?: string;
-  author?: string;
 }
 
 export interface IngestionPipelineConfig {
   chunkTokens: number;
   chunkOverlap: number;
   targetModel: string;
-  preserveSentenceBoundaries: boolean;
 }
