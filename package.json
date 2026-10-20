@@ -1,0 +1,11 @@
+{
+  "name": "rag-assignment-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Enterprise Document RAG Application Workspace",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint"
+  }
+}

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-container-low":"#eff4ff","on-tertiary-fixed-variant":"#00504a","on-primary-fixed":"#1a1b21","secondary":"#006398","surface-container-lowest":"#ffffff","accent-sky-border":"#BAE6FD","tertiary":"#000000","on-primary-container":"#82838a","tertiary-fixed":"#9cf2e8","error-container":"#ffdad6","on-secondary":"#ffffff","status-indexing-bg":"#FEF3C7","on-secondary-fixed-variant":"#004b73","canvas-bg":"#F4F5F7","on-error-container":"#93000a","error":"#ba1a1a","surface":"#f8f9ff","inverse-on-surface":"#eaf1ff","surface-tint":"#5d5e64","status-failed-text":"#991B1B","primary-container":"#1a1b21","primary-fixed":"#e2e2e9","secondary-container":"#5bb8fe","tertiary-fixed-dim":"#80d5cb","inverse-primary":"#c6c6cd","status-failed-bg":"#FEF2F2","status-indexed-text":"#065F46","surface-variant":"#d3e4fe","on-tertiary-container":"#389189","accent-sky-bg":"#F0F9FF","status-processing-bg":"#EFF6FF","surface-container":"#e5eeff","status-processing-text":"#1E40AF","surface-card":"#FFFFFF","on-secondary-fixed":"#001d31","primary-fixed-dim":"#c6c6cd","surface-bright":"#f8f9ff","primary":"#000000","on-error":"#ffffff","on-surface":"#0b1c30","accent-sky-text":"#0369A1","secondary-fixed":"#cce5ff","surface-dim":"#cbdbf5","outline-variant":"#c6c6cb","inverse-surface":"#213145","surface-container-highest":"#d3e4fe","secondary-fixed-dim":"#93ccff","border-strong":"#D0D5DD","on-secondary-container":"#00476e","background":"#f8f9ff","status-indexed-bg":"#ECFDF5","on-background":"#0b1c30","on-surface-variant":"#46464b","on-tertiary":"#ffffff","on-tertiary-fixed":"#00201d","status-indexing-text":"#92400E","surface-container-high":"#dce9ff","on-primary":"#ffffff","border-subtle":"#EAECF0","tertiary-container":"#00201d","outline":"#76777b","on-primary-fixed-variant":"#45474c"},borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},spacing:{"space-lg":"1.5rem","margin-mobile":"1rem","space-xs":"0.25rem","gutter":"1.5rem","space-sm":"0.5rem","gutter-sm":"1rem","space-md":"1rem","margin":"2rem","space-xl":"2rem"},fontFamily:{"headline-md":["Geist"],"label-sm":["Geist"],"body-lg":["Geist"],"headline-xl-mobile":["Geist"],"code-sm":["JetBrains Mono"],"body-md":["Geist"],"headline-lg":["Geist"],"headline-lg-mobile":["Geist"],"body-sm":["Geist"],"label-md":["Geist"],"headline-sm":["Geist"],"headline-xl":["Geist"]},fontSize:{"headline-md":["20px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"500"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"26px",fontWeight:"400"}],"headline-xl-mobile":["28px",{lineHeight:"36px",letterSpacing:"-0.02em",fontWeight:"600"}],"code-sm":["12px",{lineHeight:"16px",fontWeight:"400"}],"body-md":["14px",{lineHeight:"22px",fontWeight:"400"}],"headline-lg":["28px",{lineHeight:"36px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-lg-mobile":["22px",{lineHeight:"30px",letterSpacing:"-0.015em",fontWeight:"600"}],"body-sm":["13px",{lineHeight:"18px",fontWeight:"400"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"500"}],"headline-sm":["16px",{lineHeight:"24px",fontWeight:"600"}],"headline-xl":["28px",{lineHeight:"44px",letterSpacing:"-0.025em",fontWeight:"600"}]}}}}</script></head><body class="bg-canvas-bg font-body-md text-on-surface antialiased"><aside class="fixed left-4 top-4 bottom-4 w-64 bg-surface-card rounded-xl shadow-[0_1px_3px_0_rgba(16,24,40,0.04),0_1px_2px_-1px_rgba(16,24,40,0.02)] z-50 flex flex-col p-4 border border-border-subtle"><div class="flex items-center gap-3 px-3 py-2 mb-6"><img alt="RAGSpace Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XnAELBKm_AipCqx72GT_c5OABYhzXNs3uduGqGEuiMirt-hYauFLLMSoIq1GGN5nwlwv3hdhoUbLGFUojhjC7E_U6UVG1HlkGQDMyDXNjThBRCgTeH2l-dFgNW9vSf43lL_dNg-CF_JHeHqKPVjVxicc13yREALUVpU__h-yyb5wXDFcqN8POqtFvIIaqBkq7CJTLLR0vdNmOa0Z-usoRU9jo80qmieJI43hehWzOBLoSek5fRswae_fY"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-semibold">RAGSpace</span><span class="font-label-sm text-label-sm text-on-surface-variant font-mono text-[10px] uppercase tracking-wider">Vector Engine</span></div></div><div class="px-3 mb-2"><span class="font-label-sm text-label-sm text-on-surface-variant font-medium uppercase tracking-wider">Workspace</span></div><nav class="flex-1 flex flex-col gap-1" data-active-classes="bg-primary text-on-primary font-medium rounded-full shadow-sm"><a class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-on-surface-variant hover:bg-canvas-bg hover:text-on-surface transition-all font-body-md text-body-md" data-path="overview" href="#"><span class="material-symbols-outlined text-[20px]">home</span><span>Overview</span></a><a aria-current="page" class="flex items-center gap-3 px-3.5 py-2.5 transition-all bg-primary text-on-primary font-medium rounded-full shadow-sm" data-path="ai-chat" href="#"><span class="material-symbols-outlined text-[20px]">auto_awesome</span><span>AI Chat</span></a><a class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-on-surface-variant hover:bg-canvas-bg hover:text-on-surface transition-all font-body-md text-body-md" data-path="documents" href="#"><span class="material-symbols-outlined text-[20px]">folder</span><span>Documents</span></a><a class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-on-surface-variant hover:bg-canvas-bg hover:text-on-surface transition-all font-body-md text-body-md" data-path="collections" href="#"><span class="material-symbols-outlined text-[20px]">layers</span><span>Collections</span></a><a class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-on-surface-variant hover:bg-canvas-bg hover:text-on-surface transition-all font-body-md text-body-md" data-path="semantic-search" href="#"><span class="material-symbols-outlined text-[20px]">saved_search</span><span>Semantic Search</span></a><a class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-on-surface-variant hover:bg-canvas-bg hover:text-on-surface transition-all font-body-md text-body-md" data-path="activity" href="#"><span class="material-symbols-outlined text-[20px]">pulse_alert</span><span>Activity</span></a><div class="my-3 border-t border-border-subtle"></div><a class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-on-surface-variant hover:bg-canvas-bg hover:text-on-surface transition-all font-body-md text-body-md" data-path="settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span>Settings</span></a></nav><div class="mt-auto p-3 rounded-lg bg-surface-container-low border border-border-subtle flex items-center justify-between"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-status-indexed-text animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface-variant">v2.4 Online</span></div><span class="font-code-sm text-code-sm text-accent-sky-text bg-accent-sky-bg px-1.5 py-0.5 rounded border border-accent-sky-border">42ms</span></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface-card/90 backdrop-blur-md z-40 border-b border-border-subtle"><div class="w-full h-full px-8 flex items-center justify-between gap-6"><div class="flex-1 max-w-xl"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3.5 text-[20px] text-on-surface-variant pointer-events-none">search</span><input class="w-full h-10 pl-10 pr-12 rounded-lg bg-canvas-bg border border-border-subtle text-on-surface font-body-md text-body-md placeholder:text-on-surface-variant focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" placeholder="Search indexed docs, embeddings, or queries..." type="text"/><kbd class="absolute right-3 px-1.5 py-0.5 rounded bg-surface-card text-on-surface-variant font-code-sm text-code-sm border border-border-strong text-[11px]">/</kbd></div></div><div class="flex items-center gap-4"><button class="relative p-2 rounded-full text-on-surface-variant hover:bg-canvas-bg hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface-card"></span></button><button class="p-2 rounded-full text-on-surface-variant hover:bg-canvas-bg hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">light_mode</span></button><div class="h-6 w-[1px] bg-border-subtle"></div><div class="flex items-center gap-3 pl-2"><div class="flex flex-col items-end"><span class="font-label-md text-label-md text-on-surface font-medium">Alex Mercer</span><span class="font-label-sm text-label-sm text-accent-sky-text bg-accent-sky-bg px-2 py-0.5 rounded-full border border-accent-sky-border font-mono text-[10px]">Prod-Cluster-01</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-border-strong" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwpe43-UMy3gXO2jGoaJ1PNoKjwe3LSDg5a0x9JUKENLnG2PBfIiRVmcroeTyURw2QwrozQFEsVfZNM_eviA13HOf1IM0xGJC9FFGwJywNYwAItzpfcY63jFPtU5AmVPtE2X2SnZPZ95gL3wN1jUqWFLPIcjDgjlRa_mQ9fyBOXHBvu63NmBMFjKmhZTNKZmLiLW2pHWwLLbDFvg48UM-B3IBtcIAyZUxtl_G864TywICzfK0rdBwU"/></div></div></div></header><main class="w-full pt-16 min-h-screen bg-canvas-bg px-8 py-6"><div class="flex flex-col w-full">
+<!-- Top Context & Pipeline Telemetry Bar -->
+<div class="flex items-center justify-between pb-5">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 bg-surface-card px-3.5 py-1.5 rounded-full shadow-sm">
+<span class="w-2 h-2 rounded-full bg-status-indexed-text"></span>
+<span class="font-label-md text-label-md text-on-surface font-medium">Enterprise Legal &amp; Compliance Hub</span>
+<span class="font-code-sm text-code-sm text-accent-sky-text bg-accent-sky-bg px-2 py-0.5 rounded-full font-medium">Hybrid-v3</span>
+</div>
+<div class="hidden xl:flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-accent-sky-text">memory</span>
+<span>Claude 3.5 Sonnet + text-embedding-3-large</span>
+<span class="text-outline-variant font-mono">•</span>
+<span class="font-code-sm text-code-sm font-medium text-on-surface">k=5</span>
+<span class="text-outline-variant font-mono">•</span>
+<span class="font-code-sm text-code-sm font-medium text-on-surface">Min Cosine: 0.82</span>
+</div>
+</div>
+<div class="flex items-center gap-2.5">
+<!-- Grounding Strictness Pill -->
+<div class="flex items-center bg-surface-card px-3 py-1.5 rounded-full shadow-sm gap-2">
+<span class="material-symbols-outlined text-[17px] text-status-indexed-text">verified</span>
+<span class="font-label-sm text-label-sm text-on-surface">Grounding: Strict</span>
+<label class="relative inline-flex items-center cursor-pointer ml-1">
+<input checked="" class="sr-only peer" id="grounding-toggle" type="checkbox"/>
+<div class="w-7 h-4 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<!-- Toggle Right Inspector Panel Trigger for smaller desktop -->
+<button class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-card hover:bg-surface-container-low text-on-surface font-label-md text-label-md rounded-full shadow-sm transition-colors" id="toggle-evidence-panel-btn">
+<span class="material-symbols-outlined text-[18px] text-accent-sky-text">dock_to_left</span>
+<span>Evidence Pane</span>
+</button>
+</div>
+</div>
+<!-- 3-Pane Orchestration Grid: Left History / Center Stream / Right Source Inspector -->
+<div class="grid grid-cols-12 gap-5 items-start">
+<!-- LEFT COLUMN: Collapsible History & Sessions (Col Span 3) -->
+<aside class="col-span-12 lg:col-span-3 flex flex-col gap-4">
+<div class="bg-surface-card rounded-xl p-4 shadow-sm flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">Threads</span>
+<span class="font-code-sm text-code-sm px-2 py-0.5 rounded-full bg-surface-container-low text-secondary font-medium">14 active</span>
+</div>
+<button class="flex items-center gap-1 px-3 py-1.5 bg-primary hover:bg-primary-container text-on-primary rounded-full font-label-sm text-label-sm transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[15px]">add</span>
+<span>New Query</span>
+</button>
+</div>
+<!-- Filter / Quick Search -->
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-[17px] text-on-surface-variant pointer-events-none">filter_list</span>
+<input class="w-full h-9 pl-9 pr-3 rounded-lg bg-surface text-on-surface font-body-sm text-body-sm placeholder:text-on-surface-variant focus:outline-none focus:bg-surface-container-low transition-colors" placeholder="Filter history &amp; tags..." type="text"/>
+</div>
+<!-- Collections Selector Context Dropdown -->
+<div class="bg-surface rounded-lg p-2.5 flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span class="uppercase tracking-wider">Scoped Collection</span>
+<span class="material-symbols-outlined text-[16px] cursor-pointer hover:text-on-surface">tune</span>
+</div>
+<div class="flex items-center justify-between bg-surface-card px-2.5 py-1.5 rounded shadow-sm cursor-pointer hover:bg-accent-sky-bg transition-colors">
+<div class="flex items-center gap-2 truncate">
+<span class="material-symbols-outlined text-[17px] text-secondary">gavel</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate font-medium">Enterprise Docs (Legal)</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">expand_more</span>
+</div>
+</div>
+<!-- Pinned Queries & Historical Trees -->
+<div class="flex flex-col gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-1">Pinned Investigations</span>
+<a class="group flex items-start gap-2.5 p-2.5 rounded-lg bg-surface-container-low transition-colors text-left" href="#">
+<span class="material-symbols-outlined text-[18px] text-accent-sky-text mt-0.5">push_pin</span>
+<div class="flex-1 min-w-0">
+<p class="font-body-sm text-body-sm font-medium text-on-surface truncate">EU AI Act High-Risk Requirements</p>
+<div class="flex items-center gap-2 mt-1 font-label-sm text-label-sm text-on-surface-variant">
+<span>3 sources</span>
+<span>•</span>
+<span class="text-status-indexed-text">Grounding 98%</span>
+</div>
+</div>
+</a>
+<a class="group flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-surface transition-colors text-left" href="#">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant mt-0.5">forum</span>
+<div class="flex-1 min-w-0">
+<p class="font-body-sm text-body-sm text-on-surface truncate">Hybrid vs Dense Vector Benchmarks</p>
+<div class="flex items-center gap-2 mt-1 font-label-sm text-label-sm text-on-surface-variant">
+<span>Qdrant 1.9</span>
+<span>•</span>
+<span>Yesterday</span>
+</div>
+</div>
+</a>
+<a class="group flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-surface transition-colors text-left" href="#">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant mt-0.5">forum</span>
+<div class="flex-1 min-w-0">
+<p class="font-body-sm text-body-sm text-on-surface truncate">SOC2 Type II Audit Evidence</p>
+<div class="flex items-center gap-2 mt-1 font-label-sm text-label-sm text-on-surface-variant">
+<span>8 documents</span>
+<span>•</span>
+<span>2d ago</span>
+</div>
+</div>
+</a>
+<a class="group flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-surface transition-colors text-left" href="#">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant mt-0.5">forum</span>
+<div class="flex-1 min-w-0">
+<p class="font-body-sm text-body-sm text-on-surface truncate">Q3 Revenue Drivers Analysis</p>
+<div class="flex items-center gap-2 mt-1 font-label-sm text-label-sm text-on-surface-variant">
+<span>Finance Q3</span>
+<span>•</span>
+<span>Oct 14</span>
+</div>
+</div>
+</a>
+</div>
+<!-- Telemetry Widget: Cluster State -->
+<div class="mt-2 p-3 bg-surface rounded-xl flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Index Metrics</span>
+<span class="font-code-sm text-code-sm text-status-indexed-text font-medium">99.8% Recall</span>
+</div>
+<!-- Sparkline representation of similarity distribution -->
+<svg class="w-full h-8 text-secondary overflow-visible" fill="none" viewbox="0 0 160 30">
+<path d="M0 24 L20 22 L40 18 L60 19 L80 12 L100 15 L120 7 L140 9 L160 3" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+<path d="M0 24 L20 22 L40 18 L60 19 L80 12 L100 15 L120 7 L140 9 L160 3 V30 H0 Z" fill="currentColor" fill-opacity="0.1"></path>
+</svg>
+<div class="flex justify-between items-center font-code-sm text-code-sm text-on-surface-variant pt-1">
+<span>2.4M Chunks</span>
+<span>Latency: 38ms</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- CENTER COLUMN: Active Grounded Conversation Stream (Col Span 5 or 6 depending on inspection drawer) -->
+<main class="col-span-12 lg:col-span-5 xl:col-span-5 flex flex-col gap-5">
+<!-- Thread Scroll Area -->
+<div class="flex flex-col gap-5">
+<!-- User Query Bubble -->
+<div class="flex justify-end pl-8">
+<div class="max-w-2xl bg-primary text-on-primary rounded-2xl rounded-tr-none px-5 py-4 shadow-sm">
+<div class="flex items-center gap-2 mb-1.5 opacity-70">
+<span class="font-label-sm text-label-sm tracking-wide">Alex Mercer • 10:42 AM</span>
+</div>
+<p class="font-body-md text-body-md leading-relaxed">
+              What are the mandatory requirements for high-risk AI systems regarding data governance under the EU AI Act, and what are the penalties for non-compliance?
+            </p>
+</div>
+</div>
+<!-- Assistant Synthesized Response Container -->
+<div class="flex items-start gap-3.5 pr-2">
+<!-- Avatar Icon -->
+<div class="w-9 h-9 rounded-full bg-surface-card shadow-sm flex items-center justify-center shrink-0 mt-1">
+<span class="material-symbols-outlined text-[20px] text-secondary">smart_toy</span>
+</div>
+<div class="flex-1 bg-surface-card rounded-2xl rounded-tl-none p-6 shadow-sm flex flex-col gap-4">
+<!-- Model Reasoning Header -->
+<div class="flex items-center justify-between pb-3 bg-surface-container-low -mx-6 -mt-6 p-4 rounded-t-2xl">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-status-indexed-text"></span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Synthesis complete from 3 grounded sources</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-code-sm text-code-sm text-on-surface-variant">Prompt tokens: 1,842 • 0.64s</span>
+<button class="p-1 text-on-surface-variant hover:text-on-surface transition-colors" title="Copy response">
+<span class="material-symbols-outlined text-[17px]">content_copy</span>
+</button>
+</div>
+</div>
+<!-- Structured Grounded Content Body -->
+<div class="flex flex-col gap-4 text-on-surface font-body-md text-body-md">
+<p class="leading-relaxed">
+                Under the finalized <strong>EU AI Act (Regulation 2024/1689)</strong>, providers of high-risk AI systems are bound to stringent data governance obligations under <strong>Article 10</strong>, paired with substantial administrative financial penalties defined in <strong>Article 99</strong>.
+              </p>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-2 font-semibold">1. Mandatory Data Governance Requirements (Article 10)</h4>
+<p class="mb-2">Training, validation, and testing datasets must satisfy rigorous quality criteria, specifically requiring:</p>
+<ul class="flex flex-col gap-2 pl-1">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary mt-0.5 shrink-0">check_circle</span>
+<span><strong>Relevant Design Choices:</strong> Explicit documentation of data collection origin, curation protocols, and preprocessing methodologies 
+                      <button class="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text hover:bg-secondary hover:text-on-secondary font-code-sm text-code-sm font-semibold transition-colors citation-trigger" data-chunk-ref="1">[1]</button>.
+                    </span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary mt-0.5 shrink-0">check_circle</span>
+<span><strong>Bias Mitigation &amp; Representativeness:</strong> Datasets must be relevant, sufficiently representative, and free of systemic errors to prevent prohibited discriminatory outcomes 
+                      <button class="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text hover:bg-secondary hover:text-on-secondary font-code-sm text-code-sm font-semibold transition-colors citation-trigger" data-chunk-ref="2">[2]</button>.
+                    </span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary mt-0.5 shrink-0">check_circle</span>
+<span><strong>Special Category Data Exception:</strong> Processing of sensitive personal data (e.g., biometrics, health) is exceptionally permitted strictly when essential to detect and eliminate bias 
+                      <button class="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text hover:bg-secondary hover:text-on-secondary font-code-sm text-code-sm font-semibold transition-colors citation-trigger" data-chunk-ref="1">[1]</button>.
+                    </span>
+</li>
+</ul>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-2 font-semibold">2. Penalties &amp; Fines for Non-Compliance (Article 99)</h4>
+<p class="leading-relaxed">
+                  Penalties are tiered based on violation severity and business revenue thresholds:
+                </p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2.5">
+<div class="bg-surface p-3.5 rounded-xl flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-error uppercase tracking-wider font-semibold">Prohibited Practices</span>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">Up to €35M</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">or 7% of total global annual turnover, whichever is higher <button class="inline-flex items-center justify-center px-1.5 py-0.2 rounded-full bg-accent-sky-bg text-accent-sky-text font-code-sm text-code-sm font-semibold citation-trigger" data-chunk-ref="3">[3]</button></span>
+</div>
+<div class="bg-surface p-3.5 rounded-xl flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-accent-sky-text uppercase tracking-wider font-semibold">High-Risk Governance Breach</span>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">Up to €15M</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">or 3% of global turnover for Article 10 dataset violations <button class="inline-flex items-center justify-center px-1.5 py-0.2 rounded-full bg-accent-sky-bg text-accent-sky-text font-code-sm text-code-sm font-semibold citation-trigger" data-chunk-ref="1">[1]</button></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Source Grounding Cards Row -->
+<div class="pt-2">
+<div class="flex items-center justify-between mb-2.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Referenced Passages (3 Ranked Chunks)</span>
+<span class="font-label-sm text-label-sm text-secondary font-medium cursor-pointer hover:underline">Re-rank telemetry</span>
+</div>
+<div class="grid grid-cols-1 gap-2.5">
+<!-- Source Card 1 (Active by default) -->
+<div class="source-card-interactive p-3 rounded-xl bg-accent-sky-bg shadow-sm cursor-pointer hover:bg-surface-container-low transition-all" id="source-card-1" onclick="selectEvidence(1)">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-2">
+<span class="w-5 h-5 rounded-full bg-secondary text-on-secondary font-code-sm text-code-sm flex items-center justify-center font-bold">1</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">EU_AI_Act_Final_Text.pdf</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant bg-surface-card px-2 py-0.5 rounded">p. 48</span>
+</div>
+<span class="font-code-sm text-code-sm text-status-indexed-text bg-status-indexed-bg px-2 py-0.5 rounded font-semibold">98.4% Match</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 italic">
+                    "Article 10(2): High-risk AI systems which make use of techniques involving the training of models with data shall be developed on the basis of training, validation and testing data sets that satisfy quality criteria..."
+                  </p>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-accent-sky-border/50 text-accent-sky-text font-label-sm text-label-sm">
+<span class="flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+                      Inspect chunk #chk-88392
+                    </span>
+<span class="font-code-sm text-code-sm text-on-surface-variant font-mono">dense: 0.91 • bm25: 14.8</span>
+</div>
+</div>
+<!-- Source Card 2 -->
+<div class="source-card-interactive p-3 rounded-xl bg-surface hover:bg-surface-container-low transition-all cursor-pointer" id="source-card-2" onclick="selectEvidence(2)">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-2">
+<span class="w-5 h-5 rounded-full bg-surface-variant text-on-surface font-code-sm text-code-sm flex items-center justify-center font-bold">2</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">EU_AI_Act_Final_Text.pdf</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant bg-surface-card px-2 py-0.5 rounded">p. 49</span>
+</div>
+<span class="font-code-sm text-code-sm text-status-indexed-text bg-status-indexed-bg px-2 py-0.5 rounded font-semibold">94.1% Match</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 italic">
+                    "Article 10(3): Training sets shall take into account, to the extent required by the intended purpose, the characteristics or elements that are particular to the specific geographical, behavioral, or functional setting..."
+                  </p>
+</div>
+<!-- Source Card 3 -->
+<div class="source-card-interactive p-3 rounded-xl bg-surface hover:bg-surface-container-low transition-all cursor-pointer" id="source-card-3" onclick="selectEvidence(3)">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-2">
+<span class="w-5 h-5 rounded-full bg-surface-variant text-on-surface font-code-sm text-code-sm flex items-center justify-center font-bold">3</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">EU_AI_Act_Final_Text.pdf</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant bg-surface-card px-2 py-0.5 rounded">p. 112</span>
+</div>
+<span class="font-code-sm text-code-sm text-status-indexed-text bg-status-indexed-bg px-2 py-0.5 rounded font-semibold">91.7% Match</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 italic">
+                    "Article 99: Infringements on prohibited practices pursuant to Article 5 shall be subject to administrative fines of up to 35,000,000 EUR or, if the offender is an undertaking, up to 7% of its total worldwide turnover..."
+                  </p>
+</div>
+</div>
+</div>
+<!-- Assistant Action Toolbar -->
+<div class="flex items-center justify-between pt-2 text-on-surface-variant font-label-md text-label-md">
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-1 hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[17px]">thumb_up</span>
+<span>Helpful</span>
+</button>
+<button class="flex items-center gap-1 hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[17px]">thumb_down</span>
+</button>
+<button class="flex items-center gap-1 hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[17px]">refresh</span>
+<span>Regenerate with k=8</span>
+</button>
+</div>
+<span class="font-label-sm text-label-sm">Audited by Vector Verifier</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Multiline Query Composer -->
+<div class="sticky bottom-4 z-20 bg-surface-card rounded-2xl shadow-xl p-4 flex flex-col gap-3">
+<!-- Composer Metadata Bar -->
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2 flex-wrap">
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent-sky-bg text-accent-sky-text hover:bg-accent-sky-border font-label-sm text-label-sm font-semibold transition-colors">
+<span class="material-symbols-outlined text-[15px]">add</span>
+<span>Add Context Filter</span>
+</button>
+<div class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">tune</span>
+<span>Temp: 0.1</span>
+</div>
+<div class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">language</span>
+<span>Web Hybrid: Off</span>
+</div>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant hidden sm:inline">Ctrl + K commands</span>
+</div>
+<!-- Textarea input -->
+<div class="relative">
+<textarea class="w-full bg-transparent text-on-surface font-body-md text-body-md placeholder:text-on-surface-variant resize-none focus:outline-none" placeholder="Ask questions across vectors, compare clauses, or draft audit summaries..." rows="2"></textarea>
+</div>
+<!-- Composer Footer Actions -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<button class="p-1.5 rounded-full hover:bg-surface transition-colors hover:text-on-surface" title="Attach file or chunk">
+<span class="material-symbols-outlined text-[19px]">attach_file</span>
+</button>
+<button class="p-1.5 rounded-full hover:bg-surface transition-colors hover:text-on-surface" title="Select Prompt Template">
+<span class="material-symbols-outlined text-[19px]">integration_instructions</span>
+</button>
+<span class="text-on-surface-variant font-label-sm text-label-sm pl-1 hidden sm:inline">Enter to send, Shift+Enter for newline</span>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-label-md text-label-md font-semibold transition-all shadow-sm">
+<span>Query Pipeline</span>
+<span class="material-symbols-outlined text-[18px]">arrow_upward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- RIGHT COLUMN: Deep Source Evidence & Verification Inspector (Col Span 4) -->
+<aside class="col-span-12 lg:col-span-4 xl:col-span-4 flex flex-col gap-4" id="evidence-panel">
+<div class="bg-surface-card rounded-2xl p-5 shadow-sm flex flex-col gap-4">
+<!-- Inspector Header -->
+<div class="flex items-center justify-between pb-3 bg-surface-container-low -mx-5 -mt-5 p-4 rounded-t-2xl">
+<div class="flex items-center gap-2.5">
+<span class="w-7 h-7 rounded-full bg-secondary text-on-secondary font-code-sm text-code-sm font-bold flex items-center justify-center" id="evidence-badge-num">1</span>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Source Evidence</h3>
+<p class="font-label-sm text-label-sm text-status-indexed-text font-medium" id="evidence-confidence">Score: 98.4% Confidence • Exact Semantic Vector</p>
+</div>
+</div>
+<button class="p-1 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface transition-colors" onclick="document.getElementById('evidence-panel').classList.toggle('hidden')">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Document Metadata Pillbox -->
+<div class="bg-surface p-3 rounded-xl flex flex-col gap-2">
+<div class="flex items-center justify-between text-on-surface">
+<div class="flex items-center gap-2 truncate">
+<span class="material-symbols-outlined text-[18px] text-secondary">picture_as_pdf</span>
+<span class="font-body-sm text-body-sm font-semibold truncate" id="evidence-doc-title">EU_AI_Act_Final_Text.pdf</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant font-mono shrink-0" id="evidence-doc-page">Page 48</span>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1 font-label-sm text-label-sm">
+<div class="flex flex-col">
+<span class="text-on-surface-variant uppercase text-[10px] tracking-wider">Legal Section</span>
+<span class="font-medium text-on-surface" id="evidence-section">Chap. III, Sec. 2, Art. 10</span>
+</div>
+<div class="flex flex-col">
+<span class="text-on-surface-variant uppercase text-[10px] tracking-wider">Chunk Identifier</span>
+<span class="font-code-sm text-code-sm font-mono text-secondary" id="evidence-chunk-id">#chk-88392</span>
+</div>
+</div>
+</div>
+<!-- Document Visual Context Thumbnail / Illustration -->
+<div class="relative w-full h-28 rounded-xl overflow-hidden bg-surface-container flex items-center justify-center">
+<img class="w-full h-full object-cover opacity-85" data-alt="Technical architectural document viewer showing EU AI Act legal paragraphs with precise text highlighted in sky blue and canary yellow under clean laboratory office illumination." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDc2KEeOZfF7L8yPdzMaCSkGpDhIheYk30LQvqYAcrScfjEJ4vn_n1MMZbCI0CpoXvj8BRWIfBzdLeUElWyJTj1nnNScaqONfm6LNiMQC46TZXEq45G3-yq846g1djt9OMEE8WVpqAaOg2oa_3cBlNcRFfMr3URxYjOaYD8zkI13tlFIgJ_nag_Jdc2CHGAUI-w4X2uRyCOAd9ZQrdMbllO1PZL07PcM85e14PUC0XSakw2R9w2A07m"/>
+<div class="absolute inset-0 bg-primary/20 backdrop-blur-[1px] flex items-center justify-center">
+<span class="bg-surface-card/90 text-on-surface font-label-sm text-label-sm px-3 py-1 rounded-full font-medium shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-secondary">zoom_in</span>
+<span>Viewport synchronized to vector anchor</span>
+</span>
+</div>
+</div>
+<!-- Verbatim Highlighted Grounded Excerpt -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Verbatim Corpus Extract</span>
+<span class="font-code-sm text-code-sm text-accent-sky-text">Cosine 0.941</span>
+</div>
+<div class="p-4 rounded-xl bg-surface font-body-sm text-body-sm leading-relaxed text-on-surface max-h-64 overflow-y-auto" id="evidence-text-block">
+<p class="text-on-surface-variant mb-2">
+              ...3. High-risk AI systems which make use of techniques involving the training of models with data shall be developed on the basis of training, validation and testing data sets that satisfy the quality criteria referred to in paragraphs 2 to 5.
+            </p>
+<p class="bg-accent-sky-bg text-on-surface font-medium p-2 rounded-lg">
+<mark class="bg-status-indexing-bg text-status-indexing-text px-1 rounded">Article 10(2)(f): Appropriate data governance and management practices shall apply specifically to mitigation of possible biases</mark> that are likely to affect the health, safety or fundamental rights of persons, and to data validation protocols.
+            </p>
+<p class="text-on-surface-variant mt-2">
+              4. Training, validation and testing data sets shall take into account, to the extent required by the intended purpose, the characteristics or elements that are particular to the specific geographic, behavioral or functional setting within which the high-risk AI system is intended to be used...
+            </p>
+</div>
+</div>
+<!-- Vector Verification Metrics Breakdown -->
+<div class="p-3.5 bg-surface-container-low rounded-xl flex flex-col gap-2.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Retrieval Diagnostics</span>
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center font-label-sm text-label-sm">
+<span class="text-on-surface">Dense Embedding Sim:</span>
+<span class="font-code-sm text-code-sm font-semibold text-secondary">0.912</span>
+</div>
+<div class="w-full bg-surface-card h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 91.2%"></div>
+</div>
+<div class="flex justify-between items-center font-label-sm text-label-sm mt-1">
+<span class="text-on-surface">BM25 Sparse Lexical:</span>
+<span class="font-code-sm text-code-sm font-semibold text-accent-sky-text">14.82 pts</span>
+</div>
+<div class="w-full bg-surface-card h-1.5 rounded-full overflow-hidden">
+<div class="bg-accent-sky-text h-full rounded-full" style="width: 86%"></div>
+</div>
+<div class="flex justify-between items-center font-label-sm text-label-sm mt-1">
+<span class="text-on-surface">Cross-Encoder Re-ranker:</span>
+<span class="font-code-sm text-code-sm font-semibold text-status-indexed-text">0.984</span>
+</div>
+<div class="w-full bg-surface-card h-1.5 rounded-full overflow-hidden">
+<div class="bg-status-indexed-text h-full rounded-full" style="width: 98.4%"></div>
+</div>
+</div>
+</div>
+<!-- Inspection Drawer Actions -->
+<div class="flex flex-col gap-2 pt-1">
+<button class="w-full py-2.5 px-3 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[17px]">open_in_new</span>
+<span>Open in Full PDF Reader</span>
+</button>
+<div class="grid grid-cols-2 gap-2">
+<button class="py-2 px-3 bg-surface hover:bg-surface-container-low text-on-surface rounded-xl font-label-md text-label-md font-medium transition-colors flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">bookmark_add</span>
+<span>Copy Citation</span>
+</button>
+<button class="py-2 px-3 bg-surface hover:bg-status-failed-bg text-status-failed-text rounded-xl font-label-md text-label-md font-medium transition-colors flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">flag</span>
+<span>Flag Bad Chunk</span>
+</button>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div>
+<script>
+  // Evidence mock database for interactive citations
+  const evidenceData = {
+    1: {
+      badge: "1",
+      confidence: "Score: 98.4% Confidence • Exact Semantic Vector",
+      title: "EU_AI_Act_Final_Text.pdf",
+      page: "Page 48",
+      section: "Chap. III, Sec. 2, Art. 10",
+      chunkId: "#chk-88392",
+      excerpt: `<p class="text-on-surface-variant mb-2">...3. High-risk AI systems which make use of techniques involving the training of models with data shall be developed on the basis of training, validation and testing data sets that satisfy quality criteria...</p><p class="bg-accent-sky-bg text-on-surface font-medium p-2 rounded-lg"><mark class="bg-status-indexing-bg text-status-indexing-text px-1 rounded">Article 10(2)(f): Appropriate data governance and management practices shall apply specifically to mitigation of possible biases</mark> that are likely to affect health, safety or fundamental rights.</p>`
+    },
+    2: {
+      badge: "2",
+      confidence: "Score: 94.1% Confidence • High Re-ranker Fit",
+      title: "EU_AI_Act_Final_Text.pdf",
+      page: "Page 49",
+      section: "Chap. III, Sec. 2, Art. 10(3)",
+      chunkId: "#chk-88395",
+      excerpt: `<p class="text-on-surface-variant mb-2">...4. Training sets shall take into account, to the extent required by the intended purpose...</p><p class="bg-accent-sky-bg text-on-surface font-medium p-2 rounded-lg"><mark class="bg-status-indexing-bg text-status-indexing-text px-1 rounded">Characteristics or elements that are particular to the specific geographical, behavioral, or functional setting</mark> within which the high-risk AI system is intended to operate.</p>`
+    },
+    3: {
+      badge: "3",
+      confidence: "Score: 91.7% Confidence • Penalty Clause",
+      title: "EU_AI_Act_Final_Text.pdf",
+      page: "Page 112",
+      section: "Chap. XII, Art. 99 (Penalties)",
+      chunkId: "#chk-90142",
+      excerpt: `<p class="text-on-surface-variant mb-2">...Administrative fines and enforcement provisions for market surveillance...</p><p class="bg-accent-sky-bg text-on-surface font-medium p-2 rounded-lg"><mark class="bg-status-indexing-bg text-status-indexing-text px-1 rounded">Non-compliance with the prohibition of the AI practices shall be subject to administrative fines of up to 35,000,000 EUR or up to 7% of total worldwide turnover.</mark></p>`
+    }
+  };
+
+  function selectEvidence(id) {
+    const data = evidenceData[id];
+    if (!data) return;
+
+    // Ensure pane is visible
+    const pane = document.getElementById('evidence-panel');
+    if (pane.classList.contains('hidden')) {
+      pane.classList.remove('hidden');
+    }
+
+    // Update UI elements
+    document.getElementById('evidence-badge-num').innerText = data.badge;
+    document.getElementById('evidence-confidence').innerText = data.confidence;
+    document.getElementById('evidence-doc-title').innerText = data.title;
+    document.getElementById('evidence-doc-page').innerText = data.page;
+    document.getElementById('evidence-section').innerText = data.section;
+    document.getElementById('evidence-chunk-id').innerText = data.chunkId;
+    document.getElementById('evidence-text-block').innerHTML = data.excerpt;
+
+    // Reset card states
+    [1, 2, 3].forEach(num => {
+      const el = document.getElementById('source-card-' + num);
+      if (el) {
+        if (num === id) {
+          el.className = 'source-card-interactive p-3 rounded-xl bg-accent-sky-bg shadow-sm cursor-pointer hover:bg-surface-container-low transition-all';
+        } else {
+          el.className = 'source-card-interactive p-3 rounded-xl bg-surface hover:bg-surface-container-low transition-all cursor-pointer';
+        }
+      }
+    });
+  }
+
+  // Bind inline citation click handlers
+  document.querySelectorAll('.citation-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const chunkId = parseInt(btn.getAttribute('data-chunk-ref'));
+      selectEvidence(chunkId);
+    });
+  });
+
+  // Toggle evidence panel button
+  document.getElementById('toggle-evidence-panel-btn').addEventListener('click', () => {
+    const pane = document.getElementById('evidence-panel');
+    pane.classList.toggle('hidden');
+  });
+</script></main></div></body></html>
