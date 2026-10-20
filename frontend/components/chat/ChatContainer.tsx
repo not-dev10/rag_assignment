@@ -1,194 +1,230 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, Citation } from '@/types/chat';
-import { mockInitialMessages, mockThreadSessions, mockCitations } from '@/lib/mockData';
+import { initialChatMessages } from '@/lib/mockData';
 import { ApiClient } from '@/lib/api';
-import { ThreadHistorySidebar } from './ThreadHistorySidebar';
-import { MessageBubble } from './MessageBubble';
-import { ChatComposer } from './ChatComposer';
-import { EvidenceInspectorPane } from './EvidenceInspectorPane';
+import { MessageItem } from './MessageItem';
+import { PassageDrawer } from './PassageDrawer';
+import { Send, Trash2, Loader2, AlertCircle } from 'lucide-react';
 
 export const ChatContainer: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>(mockInitialMessages);
-  const [activeThreadId, setActiveThreadId] = useState<string>('thread-1');
-  const [activeCitations, setActiveCitations] = useState<Citation[]>(mockCitations);
-  const [selectedCitationIndex, setSelectedCitationIndex] = useState<number | null>(null);
-  const [showEvidencePane, setShowEvidencePane] = useState<boolean>(true);
-  const [isStrictGrounding, setIsStrictGrounding] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null);
+  const [inspectMessage, setInspectMessage] = useState<ChatMessage | null>(null);
 
-  const handleSendMessage = async (query: string) => {
-    const userMsg: ChatMessage = {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom of conversation
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
+    }
+  }, [input]);
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const query = input.trim();
+    if (!query || isLoading) return;
+
+    setError(null);
+    setInput('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+
+    const userMessage: ChatMessage = {
       id: `msg-${Date.now()}`,
       role: 'user',
       content: query,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
-      const response = await ApiClient.askQuestion(query, undefined, isStrictGrounding);
-      const assistantMsg: ChatMessage = {
+      const res = await ApiClient.askQuestion(query);
+
+      const assistantMessage: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        content: response.answer,
+        content: res.answer,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        citations: response.citations,
-        groundingStatus: response.groundingStatus,
-        groundingScore: response.groundingScore,
-        tokenCount: response.tokenCount,
-        latencyMs: response.latencyMs,
-        model: response.model,
+        citations: res.citations,
+        isFallback: res.isFallback,
+        retrievalContext: res.retrievalContext,
+        latencyMs: res.latencyMs,
       };
 
-      setMessages((prev) => [...prev, assistantMsg]);
-      if (response.citations && response.citations.length > 0) {
-        setActiveCitations(response.citations);
-        setSelectedCitationIndex(0);
-      }
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (err: any) {
-      const errorMsg: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        role: 'assistant',
-        content: `Error connecting to Node API: ${err.message || 'Service unreachable'}. Please verify backend-node is running on port 4000.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        groundingStatus: 'fallback',
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      setError(err.message || 'Unable to retrieve answer. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleNewThread = () => {
-    setActiveThreadId(`thread-${Date.now()}`);
-    setMessages([
-      {
-        id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: 'Hello! I am your document-grounded assistant. Ask questions and I will retrieve evidence strictly from your indexed files.',
-        timestamp: 'Just now',
-        groundingStatus: 'strict',
-      },
-    ]);
-    setActiveCitations([]);
-    setSelectedCitationIndex(null);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const handleClearConversation = () => {
+    if (messages.length === 0) return;
+    if (confirm('Clear the current conversation?')) {
+      setMessages([]);
+      setSelectedCitation(null);
+      setInspectMessage(null);
+      setError(null);
+    }
   };
 
   return (
-    <div className="flex flex-col w-full">
-      {/* Top Context & Pipeline Telemetry Bar */}
-      <div className="flex items-center justify-between pb-5">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-surface-card px-3.5 py-1.5 rounded-full shadow-2xs border border-border-subtle">
-            <span className="w-2 h-2 rounded-full bg-status-indexed-text" />
-            <span className="text-xs font-semibold text-on-surface">
-              Enterprise Legal &amp; Compliance Hub
-            </span>
-            <span className="text-[11px] font-mono font-medium text-accent-sky-text bg-accent-sky-bg px-2 py-0.5 rounded-full">
-              Hybrid-v3
-            </span>
-          </div>
-
-          <div className="hidden xl:flex items-center gap-2 text-on-surface-variant text-xs">
-            <span className="material-symbols-outlined text-[16px] text-accent-sky-text">memory</span>
-            <span>Claude 3.5 Sonnet + text-embedding-3-large</span>
-            <span className="text-outline-variant font-mono">•</span>
-            <span className="font-mono font-medium text-on-surface">k=5</span>
-            <span className="text-outline-variant font-mono">•</span>
-            <span className="font-mono font-medium text-on-surface">Min Cosine: 0.82</span>
-          </div>
+    <div className="flex flex-col h-[calc(100vh-80px)]">
+      {/* Top action bar: only functional controls */}
+      <div className="flex items-center justify-between pb-3 mb-2 border-b border-zinc-200">
+        <div className="text-xs text-zinc-500">
+          Ask questions grounded in indexed documents. Citations will reference exact sources.
         </div>
-
-        <div className="flex items-center gap-2.5">
-          {/* Strict Grounding Toggle */}
-          <div className="flex items-center bg-surface-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle gap-2">
-            <span className="material-symbols-outlined text-[17px] text-status-indexed-text">verified</span>
-            <span className="text-xs font-medium text-on-surface">Grounding: Strict</span>
-            <label className="relative inline-flex items-center cursor-pointer ml-1">
-              <input
-                type="checkbox"
-                checked={isStrictGrounding}
-                onChange={(e) => setIsStrictGrounding(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-7 h-4 bg-surface-container rounded-full peer-focus:outline-none peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary" />
-            </label>
-          </div>
-
-          {/* Toggle Evidence Inspector Panel */}
+        {messages.length > 0 && (
           <button
             type="button"
-            onClick={() => setShowEvidencePane(!showEvidencePane)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-2xs border text-xs font-medium transition-colors cursor-pointer ${
-              showEvidencePane
-                ? 'bg-primary text-on-primary border-primary'
-                : 'bg-surface-card hover:bg-surface-container-low text-on-surface border-border-subtle'
-            }`}
+            onClick={handleClearConversation}
+            className="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[17px]">
-              {showEvidencePane ? 'dock_to_right' : 'dock_to_left'}
-            </span>
-            <span>Evidence Pane</span>
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Clear conversation</span>
           </button>
-        </div>
-      </div>
-
-      {/* 3-Pane Orchestration Grid */}
-      <div className="grid grid-cols-12 gap-5 items-start">
-        {/* Left Column: History & Sessions (Col Span 3) */}
-        <div className="col-span-12 lg:col-span-3">
-          <ThreadHistorySidebar
-            threads={mockThreadSessions}
-            activeThreadId={activeThreadId}
-            onSelectThread={(id) => setActiveThreadId(id)}
-            onNewThread={handleNewThread}
-          />
-        </div>
-
-        {/* Center Column: Chat Stream & Composer (Col Span 6 or 9) */}
-        <div className={`col-span-12 ${showEvidencePane ? 'lg:col-span-6' : 'lg:col-span-9'} flex flex-col min-h-[calc(100vh-160px)] justify-between`}>
-          <div className="flex-1 overflow-y-auto mb-4 pr-1">
-            {messages.map((msg) => (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                selectedCitationIndex={selectedCitationIndex}
-                onCitationClick={(idx) => {
-                  setSelectedCitationIndex(idx);
-                  setShowEvidencePane(true);
-                }}
-              />
-            ))}
-
-            {isLoading && (
-              <div className="flex items-center gap-3 text-xs text-on-surface-variant p-4 rounded-xl bg-surface-card border border-border-subtle">
-                <span className="w-4 h-4 border-2 border-secondary/30 border-t-secondary rounded-full animate-spin" />
-                <span>Searching Qdrant vector store &amp; verifying citation grounding...</span>
-              </div>
-            )}
-          </div>
-
-          <div className="sticky bottom-0 pt-2 bg-canvas-bg">
-            <ChatComposer onSendMessage={handleSendMessage} isLoading={isLoading} />
-          </div>
-        </div>
-
-        {/* Right Column: Evidence Inspector (Col Span 3) */}
-        {showEvidencePane && (
-          <div className="col-span-12 lg:col-span-3">
-            <EvidenceInspectorPane
-              citations={activeCitations}
-              selectedIndex={selectedCitationIndex}
-              onSelectCitation={(idx) => setSelectedCitationIndex(idx)}
-              onClose={() => setShowEvidencePane(false)}
-            />
-          </div>
         )}
       </div>
+
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+        {messages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-zinc-500">
+            <div className="text-sm font-medium text-zinc-800 mb-1">
+              No questions asked yet
+            </div>
+            <p className="text-xs text-zinc-500 max-w-sm">
+              Type a question below to retrieve evidence and generate answers from your uploaded documents.
+            </p>
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <MessageItem
+              key={msg.id}
+              message={msg}
+              onSelectCitation={(cite) => setSelectedCitation(cite)}
+              onOpenInspector={(m) => setInspectMessage(m)}
+            />
+          ))
+        )}
+
+        {isLoading && (
+          <div className="flex items-center gap-2.5 p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs text-zinc-600 max-w-md">
+            <Loader2 className="w-4 h-4 animate-spin text-zinc-700" />
+            <span>Retrieving chunks from vector store and verifying evidence...</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 max-w-xl">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Multiline composer */}
+      <div className="pt-4 border-t border-zinc-200 bg-zinc-50/50">
+        <form
+          onSubmit={handleSubmit}
+          className="relative bg-white rounded-lg border border-zinc-300 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 shadow-2xs transition-all"
+        >
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading}
+            placeholder="Ask something about your documents... (Press Enter to send, Shift+Enter for newline)"
+            rows={2}
+            className="w-full resize-none bg-transparent p-3.5 pr-24 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none leading-relaxed"
+          />
+
+          <div className="absolute right-2.5 bottom-2.5 flex items-center gap-2">
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className={`inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                !input.trim() || isLoading
+                  ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                  : 'bg-zinc-900 hover:bg-zinc-800 text-white cursor-pointer shadow-xs'
+              }`}
+            >
+              <Send className="w-3.5 h-3.5 mr-1" />
+              <span>Send</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Source Passage Inspector Drawer */}
+      <PassageDrawer
+        citation={selectedCitation}
+        onClose={() => setSelectedCitation(null)}
+      />
+
+      {/* LLM Retrieval Context Debug View */}
+      {inspectMessage && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl border border-zinc-200">
+            <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-zinc-900">
+                Exact Context Passed to LLM
+              </h3>
+              <button
+                type="button"
+                onClick={() => setInspectMessage(null)}
+                className="text-zinc-400 hover:text-zinc-700 text-sm font-medium"
+              >
+                Close
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1 font-mono text-xs text-zinc-800 bg-zinc-50 whitespace-pre-wrap leading-relaxed">
+              {inspectMessage.retrievalContext}
+            </div>
+            <div className="p-3 border-t border-zinc-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  if (inspectMessage.retrievalContext) {
+                    navigator.clipboard.writeText(inspectMessage.retrievalContext);
+                  }
+                }}
+                className="px-3 py-1.5 rounded bg-zinc-900 text-white text-xs font-medium"
+              >
+                Copy Context
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

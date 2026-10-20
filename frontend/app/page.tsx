@@ -1,12 +1,12 @@
 'use client';
 
 import { AppShell } from '@/components/layout/AppShell';
-import { OverviewDashboard } from '@/components/overview/OverviewDashboard';
+import { ChatContainer } from '@/components/chat/ChatContainer';
 
 export default function Home() {
   return (
     <AppShell>
-      <OverviewDashboard />
+      <ChatContainer />
     </AppShell>
   );
 }
