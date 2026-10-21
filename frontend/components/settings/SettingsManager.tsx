@@ -16,116 +16,121 @@ export const SettingsManager: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-4xl">
       <div>
-        <h2 className="text-base font-semibold text-zinc-900">RAG System Configuration</h2>
-        <p className="text-xs text-zinc-500 mt-0.5">
-          Configure model providers, Qdrant vector database connection, and retrieval thresholds.
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-xl font-bold text-on-surface tracking-tight">System Configuration</h2>
+          <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text border border-accent-sky-border">
+            RAG Orchestrator
+          </span>
+        </div>
+        <p className="text-xs text-on-surface-variant mt-1">
+          Configure model providers, Qdrant vector database connection parameters, and retrieval thresholds.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* LLM & Embeddings */}
-        <div className="bg-white rounded-lg border border-zinc-200 p-5 shadow-2xs space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 text-xs font-semibold text-zinc-800">
-            <Cpu className="w-4 h-4 text-zinc-600" />
-            <span>Language & Embedding Models</span>
+        {/* LLM & Embeddings Card */}
+        <div className="glass-panel rounded-2xl p-6 border border-border-subtle shadow-sm space-y-4">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-border-subtle text-xs font-bold text-on-surface">
+            <Cpu className="w-4 h-4 text-secondary" />
+            <span>Language &amp; Embedding Model Providers</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block text-zinc-600 font-medium mb-1">LLM Provider</label>
+              <label className="block text-on-surface font-semibold mb-1.5">LLM Provider</label>
               <select
                 value={settings.llmProvider}
                 onChange={(e) =>
                   setSettings({ ...settings, llmProvider: e.target.value as any })
                 }
-                className="w-full h-9 px-3 bg-white border border-zinc-200 rounded-md text-zinc-900 focus:outline-none focus:border-zinc-400"
+                className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary text-xs"
               >
-                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="anthropic">Anthropic (Claude 3.5 Sonnet)</option>
                 <option value="openai">OpenAI (GPT-4o)</option>
-                <option value="ollama">Local (Ollama)</option>
+                <option value="ollama">Local (Ollama / Llama 3)</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-zinc-600 font-medium mb-1">Model Name</label>
+              <label className="block text-on-surface font-semibold mb-1.5">Model Identifier</label>
               <input
                 type="text"
                 value={settings.llmModel}
                 onChange={(e) => setSettings({ ...settings, llmModel: e.target.value })}
-                className="w-full h-9 px-3 bg-white border border-zinc-200 rounded-md text-zinc-900 font-mono text-xs focus:outline-none focus:border-zinc-400"
+                className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface font-mono text-xs focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-zinc-600 font-medium mb-1">
-                Embedding Model (Dimensions: 3072)
+              <label className="block text-on-surface font-semibold mb-1.5">
+                Embedding Model (Vector Output Dimension: 3072)
               </label>
               <input
                 type="text"
                 value={settings.embeddingModel}
                 onChange={(e) => setSettings({ ...settings, embeddingModel: e.target.value })}
-                className="w-full h-9 px-3 bg-white border border-zinc-200 rounded-md text-zinc-900 font-mono text-xs focus:outline-none focus:border-zinc-400"
+                className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface font-mono text-xs focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
               />
             </div>
           </div>
         </div>
 
-        {/* Qdrant Vector Store */}
-        <div className="bg-white rounded-lg border border-zinc-200 p-5 shadow-2xs space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 text-xs font-semibold text-zinc-800">
-            <Database className="w-4 h-4 text-zinc-600" />
-            <span>Qdrant Vector Database</span>
+        {/* Qdrant Vector Store Card */}
+        <div className="glass-panel rounded-2xl p-6 border border-border-subtle shadow-sm space-y-4">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-border-subtle text-xs font-bold text-on-surface">
+            <Database className="w-4 h-4 text-secondary" />
+            <span>Qdrant Vector Database Connection</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block text-zinc-600 font-medium mb-1">Qdrant Host URL</label>
+              <label className="block text-on-surface font-semibold mb-1.5">Qdrant Host URL</label>
               <input
                 type="text"
                 value={settings.qdrantUrl}
                 onChange={(e) => setSettings({ ...settings, qdrantUrl: e.target.value })}
-                className="w-full h-9 px-3 bg-white border border-zinc-200 rounded-md text-zinc-900 font-mono text-xs focus:outline-none focus:border-zinc-400"
+                className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface font-mono text-xs focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
               />
             </div>
 
             <div>
-              <label className="block text-zinc-600 font-medium mb-1">Collection Name</label>
+              <label className="block text-on-surface font-semibold mb-1.5">Collection Name</label>
               <input
                 type="text"
                 value={settings.qdrantCollection}
                 onChange={(e) => setSettings({ ...settings, qdrantCollection: e.target.value })}
-                className="w-full h-9 px-3 bg-white border border-zinc-200 rounded-md text-zinc-900 font-mono text-xs focus:outline-none focus:border-zinc-400"
+                className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface font-mono text-xs focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-zinc-600 font-medium mb-1">
-                API Key (Optional for local Qdrant)
+              <label className="block text-on-surface font-semibold mb-1.5">
+                Qdrant API Key (Optional for local Docker instances)
               </label>
               <input
                 type="password"
                 value={settings.qdrantApiKey}
                 onChange={(e) => setSettings({ ...settings, qdrantApiKey: e.target.value })}
-                placeholder="Leave blank for local Docker instances"
-                className="w-full h-9 px-3 bg-white border border-zinc-200 rounded-md text-zinc-900 font-mono text-xs focus:outline-none focus:border-zinc-400"
+                placeholder="Leave blank for local instance"
+                className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface font-mono text-xs focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
               />
             </div>
           </div>
         </div>
 
-        {/* Retrieval Parameters */}
-        <div className="bg-white rounded-lg border border-zinc-200 p-5 shadow-2xs space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 text-xs font-semibold text-zinc-800">
-            <Sliders className="w-4 h-4 text-zinc-600" />
-            <span>Retrieval & Chunking Parameters</span>
+        {/* Retrieval Parameters Card */}
+        <div className="glass-panel rounded-2xl p-6 border border-border-subtle shadow-sm space-y-4">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-border-subtle text-xs font-bold text-on-surface">
+            <Sliders className="w-4 h-4 text-secondary" />
+            <span>Vector Retrieval &amp; Chunking Hyperparameters</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block text-zinc-600 font-medium mb-1">
-                Top-K Retrieved Chunks (k)
+              <label className="block text-on-surface font-semibold mb-1.5">
+                Top-K Retrieved Candidates (k)
               </label>
               <input
                 type="number"
@@ -135,13 +140,13 @@ export const SettingsManager: React.FC = () => {
                 onChange={(e) =>
                   setSettings({ ...settings, topK: parseInt(e.target.value, 10) || 4 })
                 }
-                className="w-full h-9 px-3 bg-white border border-zinc-200 rounded-md text-zinc-900 font-mono text-xs focus:outline-none focus:border-zinc-400"
+                className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface font-mono text-xs focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
               />
             </div>
 
             <div>
-              <label className="block text-zinc-600 font-medium mb-1">
-                Min Similarity Threshold (Cosine)
+              <label className="block text-on-surface font-semibold mb-1.5">
+                Min Cosine Threshold (0.00 – 1.00)
               </label>
               <input
                 type="number"
@@ -152,53 +157,53 @@ export const SettingsManager: React.FC = () => {
                 onChange={(e) =>
                   setSettings({ ...settings, similarityThreshold: parseFloat(e.target.value) || 0.75 })
                 }
-                className="w-full h-9 px-3 bg-white border border-zinc-200 rounded-md text-zinc-900 font-mono text-xs focus:outline-none focus:border-zinc-400"
+                className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface font-mono text-xs focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
               />
             </div>
 
             <div>
-              <label className="block text-zinc-600 font-medium mb-1">Chunk Size (Tokens)</label>
+              <label className="block text-on-surface font-semibold mb-1.5">Chunk Size (Tokens)</label>
               <input
                 type="number"
                 value={settings.chunkTokens}
                 onChange={(e) =>
                   setSettings({ ...settings, chunkTokens: parseInt(e.target.value, 10) || 512 })
                 }
-                className="w-full h-9 px-3 bg-white border border-zinc-200 rounded-md text-zinc-900 font-mono text-xs focus:outline-none focus:border-zinc-400"
+                className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface font-mono text-xs focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
               />
             </div>
 
             <div>
-              <label className="block text-zinc-600 font-medium mb-1">Chunk Overlap (Tokens)</label>
+              <label className="block text-on-surface font-semibold mb-1.5">Chunk Overlap (Tokens)</label>
               <input
                 type="number"
                 value={settings.chunkOverlap}
                 onChange={(e) =>
                   setSettings({ ...settings, chunkOverlap: parseInt(e.target.value, 10) || 50 })
                 }
-                className="w-full h-9 px-3 bg-white border border-zinc-200 rounded-md text-zinc-900 font-mono text-xs focus:outline-none focus:border-zinc-400"
+                className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface font-mono text-xs focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
               />
             </div>
           </div>
         </div>
 
         {/* Submit */}
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-zinc-500">
-            Settings are stored in application state and forwarded to backend services.
+        <div className="flex items-center justify-between pt-2">
+          <div className="text-xs text-on-surface-variant font-mono">
+            Configuration persisted in Next.js environment.
           </div>
           <button
             type="submit"
-            className="h-9 px-4 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="h-10 px-5 rounded-full bg-primary hover:bg-neutral-800 text-on-primary text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-xs cursor-pointer"
           >
             {saved ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Saved Configuration</span>
+                <Check className="w-4 h-4 text-status-indexed-text" />
+                <span>Configuration Saved</span>
               </>
             ) : (
               <>
-                <Save className="w-3.5 h-3.5" />
+                <Save className="w-4 h-4 text-accent-sky-border" />
                 <span>Save Settings</span>
               </>
             )}

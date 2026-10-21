@@ -9,6 +9,7 @@ import {
   FileSearch,
   CheckCircle2,
   Settings,
+  Sparkles,
 } from 'lucide-react';
 
 interface NavItem {
@@ -18,7 +19,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { name: 'Chat', href: '/', icon: MessageSquare },
+  { name: 'AI Chat', href: '/', icon: MessageSquare },
   { name: 'Documents', href: '/documents', icon: Files },
   { name: 'Retrieval Inspector', href: '/inspector', icon: FileSearch },
   { name: 'Evaluation', href: '/eval', icon: CheckCircle2 },
@@ -34,21 +35,31 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-60 bg-white border-r border-zinc-200 z-30 flex flex-col">
+    <aside className="fixed left-4 top-4 bottom-4 w-64 glass-panel rounded-2xl shadow-[0_4px_24px_-4px_rgba(16,24,40,0.06),0_1px_2px_-1px_rgba(16,24,40,0.03)] z-50 flex flex-col p-4 border border-border-subtle">
       {/* Brand Header */}
-      <div className="h-14 px-5 flex items-center gap-2.5 border-b border-zinc-200">
-        <div className="w-6 h-6 rounded bg-zinc-900 flex items-center justify-center text-white font-semibold text-xs">
-          R
+      <div className="flex items-center gap-3 px-3 py-2 mb-6">
+        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-xs">
+          <Sparkles className="w-5 h-5 text-accent-sky-border" />
         </div>
         <div className="flex flex-col">
-          <span className="text-sm font-semibold tracking-tight text-zinc-900">
-            RAG Assistant
+          <span className="text-base text-primary tracking-tight font-bold">
+            RAGSpace
+          </span>
+          <span className="text-[10px] text-on-surface-variant font-mono uppercase tracking-wider font-semibold">
+            Vector Engine
           </span>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
+      {/* Section Label */}
+      <div className="px-3 mb-2">
+        <span className="text-[10px] text-on-surface-variant/70 font-mono uppercase tracking-widest font-semibold">
+          Workspace
+        </span>
+      </div>
+
+      {/* Nav Links */}
+      <nav className="flex-1 flex flex-col gap-1.5">
         {navItems.map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;
@@ -57,28 +68,28 @@ export const Sidebar: React.FC = () => {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-full transition-all text-sm font-medium ${
                 active
-                  ? 'bg-zinc-100 text-zinc-900 font-semibold'
-                  : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                  ? 'bg-primary text-on-primary shadow-xs font-semibold'
+                  : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
               }`}
             >
-              <Icon className={`w-4 h-4 ${active ? 'text-zinc-900' : 'text-zinc-500'}`} />
+              <Icon className={`w-4 h-4 ${active ? 'text-on-primary' : 'text-on-surface-variant'}`} />
               <span>{item.name}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Connection Indicator */}
-      <div className="p-3 border-t border-zinc-200">
-        <div className="px-3 py-2 rounded-md bg-zinc-50 border border-zinc-200/60 flex items-center justify-between text-xs text-zinc-600">
-          <span className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-600" />
-            <span>Qdrant Local</span>
-          </span>
-          <span className="font-mono text-[11px] text-zinc-500">:6333</span>
+      {/* Bottom Health & Telemetry */}
+      <div className="mt-auto p-3.5 rounded-xl bg-surface-container-low/80 border border-border-subtle flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-status-indexed-text animate-pulse" />
+          <span className="text-[11px] text-on-surface font-medium">v2.4 Online</span>
         </div>
+        <span className="text-[10px] text-accent-sky-text bg-accent-sky-bg px-2 py-0.5 rounded-full border border-accent-sky-border font-mono font-semibold">
+          42ms
+        </span>
       </div>
     </aside>
   );

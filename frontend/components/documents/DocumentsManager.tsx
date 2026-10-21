@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   X,
   FileCode,
+  Sparkles,
 } from 'lucide-react';
 
 export const DocumentsManager: React.FC = () => {
@@ -36,12 +37,11 @@ export const DocumentsManager: React.FC = () => {
     if (!files || files.length === 0) return;
     const file = files[0];
 
-    // Supported file validation
     const validExtensions = ['.pdf', '.md', '.txt'];
     const hasValidExt = validExtensions.some((ext) => file.name.toLowerCase().endsWith(ext));
 
     if (!hasValidExt) {
-      setUploadError(`Unsupported file format. Please upload .pdf, .md, or .txt files.`);
+      setUploadError('Unsupported file format. Please upload .pdf, .md, or .txt files.');
       return;
     }
 
@@ -71,7 +71,7 @@ export const DocumentsManager: React.FC = () => {
   };
 
   const handleDelete = async (doc: DocumentItem) => {
-    if (!confirm(`Are you sure you want to delete "${doc.filename}" and remove all its vectors from Qdrant?`)) {
+    if (!confirm(`Are you sure you want to delete "${doc.filename}" and purge all its vectors from Qdrant?`)) {
       return;
     }
 
@@ -102,24 +102,29 @@ export const DocumentsManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Search */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-zinc-900">Knowledge Base Documents</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Upload PDF, Markdown, or Text files to extract text, generate embeddings, and index into Qdrant.
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold text-on-surface tracking-tight">Document Ingestion Pipeline</h2>
+            <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text border border-accent-sky-border">
+              {documents.length} sources
+            </span>
+          </div>
+          <p className="text-xs text-on-surface-variant mt-1">
+            Extract text, generate embeddings, and persist searchable vectors into Qdrant collections.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-zinc-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-on-surface-variant" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Filter documents..."
-              className="h-8 pl-8 pr-3 text-xs bg-white border border-zinc-200 rounded-md text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400"
+              placeholder="Search documents..."
+              className="h-9 pl-9 pr-4 text-xs glass-card rounded-full text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary w-56 transition-all"
             />
           </div>
 
@@ -127,9 +132,9 @@ export const DocumentsManager: React.FC = () => {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="h-8 px-3 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="h-9 px-4 rounded-full bg-primary hover:bg-neutral-800 text-on-primary text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-xs cursor-pointer"
           >
-            <Upload className="w-3.5 h-3.5" />
+            <Upload className="w-4 h-4 text-accent-sky-border" />
             <span>Upload File</span>
           </button>
 
@@ -143,7 +148,7 @@ export const DocumentsManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Drag & Drop Upload Zone */}
+      {/* Eye-catchy Dropzone with Radial Ambient Glow */}
       <div
         onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => e.preventDefault()}
@@ -151,28 +156,51 @@ export const DocumentsManager: React.FC = () => {
           e.preventDefault();
           handleFileUpload(e.dataTransfer.files);
         }}
-        className="border-2 border-dashed border-zinc-200 hover:border-zinc-400 rounded-lg p-6 bg-white transition-colors cursor-pointer flex flex-col items-center justify-center text-center"
+        className="relative overflow-hidden glass-panel rounded-2xl p-8 border border-border-subtle shadow-sm hover:border-secondary/60 transition-all cursor-pointer group"
       >
-        <div className="w-9 h-9 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-600 mb-2">
-          <Upload className="w-4 h-4" />
-        </div>
-        <div className="text-xs font-medium text-zinc-800">
-          Click or drag files here to upload
-        </div>
-        <div className="text-[11px] text-zinc-400 mt-1">
-          Supports .pdf, .md, and .txt files (up to 25MB)
+        {/* Subtle radial ambient glow */}
+        <div className="absolute -right-16 -top-16 w-64 h-64 bg-accent-sky-bg rounded-full blur-3xl opacity-60 pointer-events-none" />
+
+        <div className="border-2 border-dashed border-accent-sky-border rounded-xl p-8 flex flex-col items-center justify-center text-center bg-accent-sky-bg/30 hover:bg-accent-sky-bg/50 transition-all">
+          <div className="w-14 h-14 rounded-full bg-accent-sky-bg flex items-center justify-center text-accent-sky-text shadow-xs mb-3 group-hover:scale-105 transition-transform">
+            <Upload className="w-6 h-6" />
+          </div>
+          <h3 className="text-sm font-bold text-on-surface mb-1">
+            Drop PDF, Markdown, or Plain Text files here
+          </h3>
+          <p className="text-xs text-on-surface-variant mb-4">
+            or <span className="text-secondary font-semibold underline underline-offset-2">browse files</span> from your local filesystem
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] font-mono text-on-surface-variant">
+            <span className="px-3 py-1 rounded-full glass-card border border-border-subtle shadow-2xs">
+              PDF (.pdf)
+            </span>
+            <span className="px-3 py-1 rounded-full glass-card border border-border-subtle shadow-2xs">
+              Markdown (.md)
+            </span>
+            <span className="px-3 py-1 rounded-full glass-card border border-border-subtle shadow-2xs">
+              Text (.txt)
+            </span>
+            <span className="px-3 py-1 rounded-full glass-card border border-border-subtle shadow-2xs">
+              Max 25MB
+            </span>
+          </div>
         </div>
 
-        {/* Multi-stage ingestion progress indicator */}
+        {/* Real Ingestion Stage Progression */}
         {isUploading && currentUploadStage && (
-          <div className="mt-4 pt-3 border-t border-zinc-100 w-full max-w-md">
-            <div className="flex items-center justify-between text-xs text-zinc-700 font-mono mb-2">
-              <span>Ingestion Pipeline:</span>
-              <span className="font-semibold text-zinc-900 capitalize">
+          <div className="mt-5 pt-4 border-t border-border-subtle/80 w-full max-w-lg mx-auto">
+            <div className="flex items-center justify-between text-xs text-on-surface font-mono mb-2">
+              <span className="font-semibold text-secondary flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-secondary animate-spin" />
+                Pipeline Processing:
+              </span>
+              <span className="font-bold text-primary capitalize px-2 py-0.5 rounded bg-surface-container-low border border-border-subtle">
                 {stageLabels[currentUploadStage]}
               </span>
             </div>
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-5 gap-2">
               {(['uploaded', 'parsed', 'chunked', 'embedded', 'indexed'] as IngestionStage[]).map(
                 (stage, idx) => {
                   const stages: IngestionStage[] = ['uploaded', 'parsed', 'chunked', 'embedded', 'indexed'];
@@ -182,8 +210,8 @@ export const DocumentsManager: React.FC = () => {
                   return (
                     <div
                       key={stage}
-                      className={`h-1.5 rounded-full transition-all ${
-                        isComplete ? 'bg-zinc-900' : 'bg-zinc-200'
+                      className={`h-2 rounded-full transition-all ${
+                        isComplete ? 'bg-secondary shadow-2xs' : 'bg-surface-container'
                       }`}
                       title={stage}
                     />
@@ -195,94 +223,101 @@ export const DocumentsManager: React.FC = () => {
         )}
 
         {uploadError && (
-          <div className="mt-3 flex items-center gap-1.5 text-xs text-red-600">
-            <AlertCircle className="w-3.5 h-3.5" />
+          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-status-failed-text bg-status-failed-bg px-4 py-2 rounded-xl border border-status-failed-text/20">
+            <AlertCircle className="w-4 h-4" />
             <span>{uploadError}</span>
           </div>
         )}
       </div>
 
-      {/* Documents Table */}
-      <div className="bg-white rounded-lg border border-zinc-200 shadow-2xs overflow-hidden">
-        <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between bg-zinc-50/50">
-          <span className="text-xs font-semibold text-zinc-700">
-            Indexed Files ({filteredDocuments.length})
-          </span>
+      {/* Documents Library Table */}
+      <div className="glass-panel rounded-2xl shadow-sm border border-border-subtle overflow-hidden">
+        <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-on-surface">Indexed Documents</span>
+            <span className="text-xs font-mono text-on-surface-variant font-medium">
+              ({filteredDocuments.length} files available in Qdrant)
+            </span>
+          </div>
         </div>
 
         {filteredDocuments.length === 0 ? (
-          <div className="p-8 text-center text-zinc-500 text-xs">
-            No documents found matching your filter.
+          <div className="p-10 text-center text-on-surface-variant text-xs">
+            No documents found matching your filter criteria.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-zinc-200 text-zinc-500 uppercase tracking-wider font-mono text-[11px]">
-                  <th className="py-2.5 px-4 font-medium">Filename</th>
-                  <th className="py-2.5 px-4 font-medium">Format</th>
-                  <th className="py-2.5 px-4 font-medium">Size</th>
-                  <th className="py-2.5 px-4 font-medium">Chunks</th>
-                  <th className="py-2.5 px-4 font-medium">Status</th>
-                  <th className="py-2.5 px-4 font-medium">Uploaded</th>
-                  <th className="py-2.5 px-4 font-medium text-right">Actions</th>
+                <tr className="border-b border-border-subtle bg-surface-container-low/40 text-on-surface-variant uppercase tracking-wider font-mono text-[10px]">
+                  <th className="py-3.5 px-6 font-semibold">Filename</th>
+                  <th className="py-3.5 px-4 font-semibold">Format</th>
+                  <th className="py-3.5 px-4 font-semibold">Size</th>
+                  <th className="py-3.5 px-4 font-semibold">Chunk Points</th>
+                  <th className="py-3.5 px-4 font-semibold">Status</th>
+                  <th className="py-3.5 px-4 font-semibold">Indexed Date</th>
+                  <th className="py-3.5 px-6 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-border-subtle/70">
                 {filteredDocuments.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-zinc-50/60 transition-colors">
-                    <td className="py-3 px-4 font-medium text-zinc-900 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-zinc-400 shrink-0" />
+                  <tr key={doc.id} className="hover:bg-surface-container-low/30 transition-colors">
+                    <td className="py-3.5 px-6 font-semibold text-on-surface flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-accent-sky-bg text-secondary flex items-center justify-center shrink-0">
+                        <FileText className="w-4 h-4" />
+                      </div>
                       <span className="truncate max-w-xs">{doc.filename}</span>
                     </td>
-                    <td className="py-3 px-4 font-mono text-zinc-600 uppercase">
+                    <td className="py-3.5 px-4 font-mono font-medium text-on-surface-variant uppercase">
                       {doc.filename.split('.').pop() || 'file'}
                     </td>
-                    <td className="py-3 px-4 font-mono text-zinc-500">
+                    <td className="py-3.5 px-4 font-mono text-on-surface-variant">
                       {(doc.sizeBytes / 1024).toFixed(1)} KB
                     </td>
-                    <td className="py-3 px-4 font-mono text-zinc-700 font-medium">
-                      {doc.chunkCount}
+                    <td className="py-3.5 px-4 font-mono text-on-surface font-bold">
+                      {doc.chunkCount} chunks
                     </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <CheckCircle2 className="w-3 h-3" />
+                    <td className="py-3.5 px-4">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-status-indexed-bg text-status-indexed-text border border-status-indexed-text/20 font-mono">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Indexed</span>
                       </span>
                     </td>
-                    <td className="py-3 px-4 font-mono text-zinc-500">{doc.uploadedAt}</td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3.5 px-4 font-mono text-on-surface-variant">
+                      {doc.uploadedAt}
+                    </td>
+                    <td className="py-3.5 px-6 text-right">
                       <div className="inline-flex items-center gap-1">
                         {doc.rawTextPreview && (
                           <button
                             type="button"
                             onClick={() => setPreviewDoc(doc)}
-                            className="p-1 rounded text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-canvas-bg transition-colors cursor-pointer"
                             title="Preview extracted text"
                           >
-                            <Eye className="w-3.5 h-3.5" />
+                            <Eye className="w-4 h-4" />
                           </button>
                         )}
                         <button
                           type="button"
                           onClick={() => handleReindex(doc)}
                           disabled={reindexingId === doc.id}
-                          className="p-1 rounded text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-canvas-bg transition-colors cursor-pointer"
                           title="Re-index document"
                         >
                           <RotateCw
-                            className={`w-3.5 h-3.5 ${
-                              reindexingId === doc.id ? 'animate-spin text-zinc-900' : ''
+                            className={`w-4 h-4 ${
+                              reindexingId === doc.id ? 'animate-spin text-secondary' : ''
                             }`}
                           />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(doc)}
-                          className="p-1 rounded text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                          title="Delete document"
+                          className="p-1.5 rounded-lg text-on-surface-variant hover:text-status-failed-text hover:bg-status-failed-bg transition-colors cursor-pointer"
+                          title="Delete from Qdrant"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -296,34 +331,34 @@ export const DocumentsManager: React.FC = () => {
 
       {/* Document Text Preview Modal */}
       {previewDoc && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-xl w-full max-h-[80vh] flex flex-col shadow-xl border border-zinc-200">
-            <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileCode className="w-4 h-4 text-zinc-600" />
-                <span className="text-sm font-semibold text-zinc-900 truncate max-w-md">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="glass-panel rounded-2xl max-w-xl w-full max-h-[80vh] flex flex-col shadow-2xl border border-border-subtle animate-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-border-subtle flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <FileCode className="w-4 h-4 text-secondary" />
+                <span className="text-sm font-bold text-on-surface truncate max-w-md">
                   {previewDoc.filename}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setPreviewDoc(null)}
-                className="text-zinc-400 hover:text-zinc-700"
+                className="p-1 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-canvas-bg transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-4 overflow-y-auto flex-1 font-mono text-xs text-zinc-800 bg-zinc-50 whitespace-pre-wrap leading-relaxed">
+            <div className="p-5 overflow-y-auto flex-1 font-mono text-xs text-on-surface bg-canvas-bg/90 whitespace-pre-wrap leading-relaxed rounded-b-xl">
               {previewDoc.rawTextPreview}
             </div>
-            <div className="p-3 border-t border-zinc-200 flex justify-between items-center text-xs text-zinc-500">
-              <span>{previewDoc.chunkCount} vector points generated</span>
+            <div className="p-4 border-t border-border-subtle flex justify-between items-center text-xs text-on-surface-variant">
+              <span className="font-mono">{previewDoc.chunkCount} vector points in collection</span>
               <button
                 type="button"
                 onClick={() => setPreviewDoc(null)}
-                className="px-3 py-1 rounded bg-zinc-900 text-white font-medium"
+                className="px-4 py-1.5 rounded-xl bg-primary text-on-primary font-semibold text-xs shadow-2xs"
               >
-                Close
+                Close Preview
               </button>
             </div>
           </div>

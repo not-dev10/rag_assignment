@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Citation } from '@/types/chat';
 import { sampleCitations } from '@/lib/mockData';
 import { ApiClient } from '@/lib/api';
-import { FileSearch, Search, FileText, Copy, Check, Terminal } from 'lucide-react';
+import { FileSearch, Search, FileText, Copy, Check, Terminal, Sparkles } from 'lucide-react';
 
 export const RetrievalInspector: React.FC = () => {
   const [query, setQuery] = useState('annual leave submission procedure');
@@ -47,46 +47,54 @@ Instructions: Answer the question using ONLY the retrieved chunks above. If the 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-base font-semibold text-zinc-900">Retrieval & Prompt Inspector</h2>
-        <p className="text-xs text-zinc-500 mt-0.5">
-          Inspect retrieved vector chunks, relevance scores, and the exact context string injected into the LLM prompt.
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-xl font-bold text-on-surface tracking-tight">Retrieval &amp; Context Inspector</h2>
+          <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text border border-accent-sky-border">
+            Vector Space Debugger
+          </span>
+        </div>
+        <p className="text-xs text-on-surface-variant mt-1">
+          Inspect vector cosine candidate chunks, metadata payloads, and the verbatim prompt context passed to the LLM.
         </p>
       </div>
 
       {/* Query Bar */}
-      <form onSubmit={handleInspect} className="flex gap-2">
+      <form onSubmit={handleInspect} className="flex gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-zinc-400" />
+          <Search className="w-4 h-4 absolute left-4 top-3 text-on-surface-variant" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Test a query against Qdrant retrieval..."
-            className="w-full h-10 pl-9 pr-3 text-xs bg-white border border-zinc-200 rounded-md text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400"
+            placeholder="Query vectors directly from Qdrant..."
+            className="w-full h-10 pl-11 pr-4 text-xs glass-panel rounded-xl text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary shadow-xs transition-all"
           />
         </div>
         <button
           type="submit"
           disabled={isLoading}
-          className="h-10 px-4 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+          className="h-10 px-5 rounded-xl bg-primary hover:bg-neutral-800 text-on-primary text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-xs cursor-pointer shrink-0"
         >
-          <FileSearch className="w-3.5 h-3.5" />
-          <span>{isLoading ? 'Retrieving...' : 'Inspect Retrieval'}</span>
+          <FileSearch className="w-4 h-4 text-accent-sky-border" />
+          <span>{isLoading ? 'Retrieving Chunks...' : 'Inspect Retrieval'}</span>
         </button>
       </form>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Left Column: Retrieved Chunks */}
-        <div className="bg-white rounded-lg border border-zinc-200 shadow-2xs p-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-200">
-            <span className="text-xs font-semibold text-zinc-800">
+        <div className="glass-panel rounded-2xl shadow-sm border border-border-subtle p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
+            <span className="text-xs font-bold text-on-surface flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-secondary" />
               Retrieved Chunks ({citations.length})
             </span>
-            <span className="text-[11px] font-mono text-zinc-500">Qdrant Points</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-container-low text-secondary font-semibold">
+              Qdrant Points
+            </span>
           </div>
 
           {citations.length === 0 ? (
-            <div className="p-6 text-center text-xs text-zinc-500">
+            <div className="p-8 text-center text-xs text-on-surface-variant">
               No matching chunks found above threshold.
             </div>
           ) : (
@@ -94,21 +102,21 @@ Instructions: Answer the question using ONLY the retrieved chunks above. If the 
               {citations.map((cite, idx) => (
                 <div
                   key={cite.id || idx}
-                  className="p-3.5 rounded-md bg-zinc-50 border border-zinc-200 flex flex-col gap-2 text-xs"
+                  className="p-4 rounded-xl glass-card border border-border-subtle hover:border-secondary/50 transition-all flex flex-col gap-2.5 text-xs shadow-2xs"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 font-medium text-zinc-900 truncate">
-                      <FileText className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                    <div className="flex items-center gap-2 font-semibold text-on-surface truncate">
+                      <FileText className="w-3.5 h-3.5 text-secondary shrink-0" />
                       <span className="truncate">{cite.filename}</span>
                     </div>
                     {cite.relevanceScore !== undefined && (
-                      <span className="font-mono text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        Score: {cite.relevanceScore.toFixed(3)}
+                      <span className="font-mono text-[11px] font-bold text-status-indexed-text bg-status-indexed-bg px-2.5 py-0.5 rounded-full border border-status-indexed-text/20">
+                        {(cite.relevanceScore * 100).toFixed(1)}% Match
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-mono">
+                  <div className="flex items-center gap-2 text-[11px] text-on-surface-variant font-mono">
                     <span>Chunk #{cite.chunkIndex}</span>
                     {cite.pageNumber && (
                       <>
@@ -119,12 +127,12 @@ Instructions: Answer the question using ONLY the retrieved chunks above. If the 
                     {cite.sectionTitle && (
                       <>
                         <span>•</span>
-                        <span className="truncate">{cite.sectionTitle}</span>
+                        <span className="truncate max-w-[200px]">{cite.sectionTitle}</span>
                       </>
                     )}
                   </div>
 
-                  <div className="p-2.5 rounded bg-white border border-zinc-200 text-zinc-800 font-mono text-[11px] leading-relaxed whitespace-pre-wrap">
+                  <div className="p-3 rounded-lg bg-canvas-bg/90 border border-border-subtle text-on-surface font-mono text-[11px] leading-relaxed whitespace-pre-wrap">
                     {cite.excerpt}
                   </div>
                 </div>
@@ -133,22 +141,22 @@ Instructions: Answer the question using ONLY the retrieved chunks above. If the 
           )}
         </div>
 
-        {/* Right Column: Exact Context String passed to LLM */}
-        <div className="bg-white rounded-lg border border-zinc-200 shadow-2xs p-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-200">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-800">
-              <Terminal className="w-3.5 h-3.5 text-zinc-600" />
-              <span>Exact Context Injected into Prompt</span>
+        {/* Right Column: Exact Context Passed to LLM */}
+        <div className="glass-panel rounded-2xl shadow-sm border border-border-subtle p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
+            <div className="flex items-center gap-2 text-xs font-bold text-on-surface">
+              <Terminal className="w-4 h-4 text-secondary" />
+              <span>Prompt Injected Context</span>
             </div>
             <button
               type="button"
               onClick={handleCopyContext}
-              className="inline-flex items-center gap-1 text-[11px] text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg glass-card hover:bg-canvas-bg text-[11px] text-on-surface font-medium transition-colors border border-border-subtle"
             >
               {copied ? (
                 <>
-                  <Check className="w-3 h-3 text-emerald-600" />
-                  <span className="text-emerald-700 font-medium">Copied</span>
+                  <Check className="w-3 h-3 text-status-indexed-text" />
+                  <span className="text-status-indexed-text font-semibold">Copied</span>
                 </>
               ) : (
                 <>
@@ -159,7 +167,7 @@ Instructions: Answer the question using ONLY the retrieved chunks above. If the 
             </button>
           </div>
 
-          <div className="p-3.5 rounded-md bg-zinc-900 text-zinc-100 font-mono text-xs leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto">
+          <div className="p-4 rounded-xl bg-zinc-950 text-zinc-100 font-mono text-xs leading-relaxed whitespace-pre-wrap max-h-[500px] overflow-y-auto shadow-inner border border-zinc-800">
             {exactContext}
           </div>
         </div>

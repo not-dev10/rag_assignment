@@ -19,14 +19,18 @@ export const CitationReference: React.FC<CitationReferenceProps> = ({
     <button
       type="button"
       onClick={() => onClick(citation)}
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 my-0.5 rounded text-xs bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border border-zinc-200 transition-colors font-mono cursor-pointer"
-      title={`Click to inspect excerpt from ${citation.filename}`}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 my-0.5 rounded-full text-xs font-mono font-semibold bg-accent-sky-bg text-accent-sky-text border border-accent-sky-border hover:bg-accent-sky-border/30 transition-all cursor-pointer shadow-2xs group"
+      title={`Click to inspect verbatim excerpt from ${citation.filename}`}
     >
-      <FileText className="w-3 h-3 text-zinc-500" />
+      <FileText className="w-3 h-3 text-secondary shrink-0" />
       <span>[{index + 1}]</span>
-      <span className="truncate max-w-[140px] font-sans font-medium">{citation.filename}</span>
-      {citation.pageNumber && <span className="text-zinc-500">p.{citation.pageNumber}</span>}
-      <ExternalLink className="w-2.5 h-2.5 text-zinc-400" />
+      <span className="truncate max-w-[150px] font-sans font-medium text-on-surface">
+        {citation.filename}
+      </span>
+      {citation.pageNumber && (
+        <span className="text-secondary font-mono text-[10px]">p.{citation.pageNumber}</span>
+      )}
+      <ExternalLink className="w-2.5 h-2.5 text-accent-sky-text opacity-70 group-hover:opacity-100 transition-opacity" />
     </button>
   );
 };

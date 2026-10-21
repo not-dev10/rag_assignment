@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { EvalTestCase } from '@/types/eval';
 import { defaultEvalTestCases } from '@/lib/mockData';
 import { ApiClient } from '@/lib/api';
-import { Play, RotateCw, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Play, RotateCw, CheckCircle2, XCircle, Clock, ShieldCheck } from 'lucide-react';
 
 export const EvaluationRunner: React.FC = () => {
   const [testCases, setTestCases] = useState<EvalTestCase[]>(defaultEvalTestCases);
@@ -39,87 +39,92 @@ export const EvaluationRunner: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-zinc-900">RAG Evaluation Suite</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Execute deterministic test questions to verify grounding, citations, and honest fallback behavior.
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold text-on-surface tracking-tight">RAG Evaluation Suite</h2>
+            <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text border border-accent-sky-border">
+              Automated Harness
+            </span>
+          </div>
+          <p className="text-xs text-on-surface-variant mt-1">
+            Execute deterministic test questions to verify grounding accuracy, citation metadata, and honest fallback handling.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs font-mono">
-            <span className="text-emerald-700 font-semibold">{passedCount} Passed</span>
-            <span className="text-zinc-300">•</span>
-            <span className="text-red-700 font-semibold">{failedCount} Failed</span>
+          <div className="flex items-center gap-2 text-xs font-mono glass-card px-3 py-1.5 rounded-full border border-border-subtle">
+            <span className="text-status-indexed-text font-bold">{passedCount} Passed</span>
+            <span className="text-outline-variant font-mono">•</span>
+            <span className="text-status-failed-text font-bold">{failedCount} Failed</span>
           </div>
 
           <button
             type="button"
             onClick={runAllTests}
             disabled={isRunningAll}
-            className="h-8 px-3.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="h-9 px-4 rounded-full bg-primary hover:bg-neutral-800 text-on-primary text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-xs cursor-pointer"
           >
             {isRunningAll ? (
               <RotateCw className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Play className="w-3.5 h-3.5" />
+              <Play className="w-3.5 h-3.5 fill-current" />
             )}
-            <span>{isRunningAll ? 'Running Tests...' : 'Run All Tests'}</span>
+            <span>{isRunningAll ? 'Running Harness...' : 'Run All Tests'}</span>
           </button>
         </div>
       </div>
 
       {/* Tests Table */}
-      <div className="bg-white rounded-lg border border-zinc-200 shadow-2xs overflow-hidden">
-        <div className="divide-y divide-zinc-200">
+      <div className="glass-panel rounded-2xl border border-border-subtle shadow-sm overflow-hidden">
+        <div className="divide-y divide-border-subtle">
           {testCases.map((test) => {
             const isPassed = test.status === 'passed';
             const isFailed = test.status === 'failed';
             const isRunning = test.status === 'running';
 
             return (
-              <div key={test.id} className="p-4 hover:bg-zinc-50/50 transition-colors flex flex-col gap-3">
+              <div key={test.id} className="p-5 hover:bg-surface-container-low/20 transition-colors flex flex-col gap-3.5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 font-semibold border border-zinc-200 shrink-0">
+                    <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-surface-container-low text-secondary font-bold border border-border-subtle shrink-0">
                       {test.scenarioId}
                     </span>
                     <div>
-                      <h3 className="text-xs font-semibold text-zinc-900">{test.name}</h3>
-                      <div className="text-xs font-mono text-zinc-600 mt-0.5 bg-zinc-50 px-2 py-1 rounded border border-zinc-200/60 inline-block">
+                      <h3 className="text-xs font-bold text-on-surface">{test.name}</h3>
+                      <div className="text-xs font-mono text-on-surface-variant mt-1 bg-canvas-bg px-2.5 py-1 rounded-md border border-border-subtle inline-block">
                         &quot;{test.query || '<empty>'}&quot;
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2.5 shrink-0">
                     {/* Status Badge */}
                     {isPassed && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <CheckCircle2 className="w-3 h-3" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-status-indexed-bg text-status-indexed-text border border-status-indexed-text/20 shadow-2xs">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Pass</span>
                       </span>
                     )}
                     {isFailed && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-                        <XCircle className="w-3 h-3" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-status-failed-bg text-status-failed-text border border-status-failed-text/20 shadow-2xs">
+                        <XCircle className="w-3.5 h-3.5" />
                         <span>Fail</span>
                       </span>
                     )}
                     {isRunning && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700">
-                        <RotateCw className="w-3 h-3 animate-spin" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container text-secondary">
+                        <RotateCw className="w-3.5 h-3.5 animate-spin" />
                         <span>Running...</span>
                       </span>
                     )}
                     {test.status === 'idle' && (
-                      <span className="text-[11px] font-mono text-zinc-400">Idle</span>
+                      <span className="text-[11px] font-mono text-on-surface-variant/70">Idle</span>
                     )}
 
                     <button
                       type="button"
                       onClick={() => runSingleTest(test.id)}
                       disabled={isRunning || isRunningAll}
-                      className="px-2.5 py-1 rounded text-xs border border-zinc-200 hover:bg-zinc-100 text-zinc-700 font-medium transition-colors cursor-pointer"
+                      className="px-3 py-1 rounded-lg text-xs glass-card hover:bg-canvas-bg text-on-surface font-semibold transition-colors cursor-pointer border border-border-subtle"
                     >
                       Run
                     </button>
@@ -127,38 +132,38 @@ export const EvaluationRunner: React.FC = () => {
                 </div>
 
                 {/* Test details */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs bg-zinc-50/70 p-2.5 rounded border border-zinc-200/50">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-canvas-bg/80 p-3 rounded-xl border border-border-subtle/80">
                   <div>
-                    <span className="text-zinc-500">Expected: </span>
-                    <span className="font-mono text-zinc-800 font-medium capitalize">
+                    <span className="text-on-surface-variant">Expected Outcome: </span>
+                    <span className="font-mono text-on-surface font-bold capitalize">
                       {test.expectedOutcome}
                     </span>
                   </div>
                   <div>
-                    <span className="text-zinc-500">Actual: </span>
+                    <span className="text-on-surface-variant">Actual Outcome: </span>
                     <span
-                      className={`font-mono font-medium capitalize ${
+                      className={`font-mono font-bold capitalize ${
                         test.actualOutcome
                           ? isPassed
-                            ? 'text-emerald-700'
-                            : 'text-red-700'
-                          : 'text-zinc-400'
+                            ? 'text-status-indexed-text'
+                            : 'text-status-failed-text'
+                          : 'text-on-surface-variant'
                       }`}
                     >
                       {test.actualOutcome || 'Not run'}
                     </span>
                   </div>
                   {test.latencyMs !== undefined && (
-                    <div className="flex items-center gap-1 text-zinc-500 font-mono">
-                      <Clock className="w-3 h-3" />
-                      <span>{test.latencyMs}ms</span>
+                    <div className="flex items-center gap-1 text-on-surface-variant font-mono">
+                      <Clock className="w-3.5 h-3.5 text-secondary" />
+                      <span>{test.latencyMs}ms execution time</span>
                     </div>
                   )}
                 </div>
 
                 {test.answer && (
-                  <div className="p-2.5 rounded bg-white border border-zinc-200 text-xs text-zinc-800">
-                    <span className="font-semibold text-zinc-600 block mb-1">Generated Output:</span>
+                  <div className="p-3.5 rounded-xl glass-card border border-border-subtle text-xs text-on-surface">
+                    <span className="font-bold text-on-surface-variant block mb-1">Generated Output:</span>
                     <p className="font-sans leading-relaxed">{test.answer}</p>
                   </div>
                 )}

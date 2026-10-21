@@ -6,12 +6,13 @@ import { initialChatMessages } from '@/lib/mockData';
 import { ApiClient } from '@/lib/api';
 import { MessageItem } from './MessageItem';
 import { PassageDrawer } from './PassageDrawer';
-import { Send, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Send, Trash2, Loader2, AlertCircle, Sparkles, Shield, Cpu } from 'lucide-react';
 
 export const ChatContainer: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isStrictGrounding, setIsStrictGrounding] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null);
   const [inspectMessage, setInspectMessage] = useState<ChatMessage | null>(null);
@@ -93,33 +94,71 @@ export const ChatContainer: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)]">
-      {/* Top action bar: only functional controls */}
-      <div className="flex items-center justify-between pb-3 mb-2 border-b border-zinc-200">
-        <div className="text-xs text-zinc-500">
-          Ask questions grounded in indexed documents. Citations will reference exact sources.
+    <div className="flex flex-col h-[calc(100vh-100px)]">
+      {/* Top Telemetry & Context Command Bar */}
+      <div className="flex items-center justify-between pb-4 mb-4 border-b border-border-subtle">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 glass-card px-3.5 py-1.5 rounded-full shadow-2xs border border-border-subtle">
+            <span className="w-2 h-2 rounded-full bg-status-indexed-text" />
+            <span className="text-xs font-semibold text-on-surface">
+              Enterprise Compliance Hub
+            </span>
+            <span className="text-[10px] font-mono font-semibold text-accent-sky-text bg-accent-sky-bg px-2 py-0.5 rounded-full border border-accent-sky-border">
+              Hybrid-v3
+            </span>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-2 text-on-surface-variant text-xs font-mono">
+            <Cpu className="w-3.5 h-3.5 text-secondary" />
+            <span>Claude 3.5 + text-embedding-3-large</span>
+            <span>•</span>
+            <span>k=4</span>
+            <span>•</span>
+            <span>Min Cosine: 0.75</span>
+          </div>
         </div>
-        {messages.length > 0 && (
-          <button
-            type="button"
-            onClick={handleClearConversation}
-            className="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 transition-colors cursor-pointer"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Clear conversation</span>
-          </button>
-        )}
+
+        <div className="flex items-center gap-3">
+          {/* Grounding Strictness Pill */}
+          <div className="flex items-center glass-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle gap-2">
+            <Shield className="w-3.5 h-3.5 text-status-indexed-text" />
+            <span className="text-xs font-medium text-on-surface">Strict Grounding</span>
+            <label className="relative inline-flex items-center cursor-pointer ml-1">
+              <input
+                type="checkbox"
+                checked={isStrictGrounding}
+                onChange={(e) => setIsStrictGrounding(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-7 h-4 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary" />
+            </label>
+          </div>
+
+          {messages.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearConversation}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-card hover:bg-canvas-bg text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer border border-border-subtle"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Clear</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Messages area */}
+      {/* Messages Stream */}
       <div className="flex-1 overflow-y-auto pr-2 space-y-4">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-zinc-500">
-            <div className="text-sm font-medium text-zinc-800 mb-1">
-              No questions asked yet
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-on-surface-variant">
+            <div className="w-12 h-12 rounded-2xl bg-accent-sky-bg text-secondary flex items-center justify-center mb-3 shadow-2xs">
+              <Sparkles className="w-6 h-6 text-accent-sky-text" />
             </div>
-            <p className="text-xs text-zinc-500 max-w-sm">
-              Type a question below to retrieve evidence and generate answers from your uploaded documents.
+            <div className="text-base font-bold text-on-surface mb-1">
+              Document Grounded Q&amp;A
+            </div>
+            <p className="text-xs text-on-surface-variant max-w-sm">
+              Type your question below. Answers will be retrieved directly from the indexed Qdrant vector store with clickable citations.
             </p>
           </div>
         ) : (
@@ -134,15 +173,15 @@ export const ChatContainer: React.FC = () => {
         )}
 
         {isLoading && (
-          <div className="flex items-center gap-2.5 p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs text-zinc-600 max-w-md">
-            <Loader2 className="w-4 h-4 animate-spin text-zinc-700" />
-            <span>Retrieving chunks from vector store and verifying evidence...</span>
+          <div className="flex items-center gap-3 p-4 rounded-2xl glass-card border border-border-subtle text-xs text-on-surface-variant max-w-md shadow-xs">
+            <Loader2 className="w-4 h-4 animate-spin text-secondary shrink-0" />
+            <span>Retrieving chunks from Qdrant vector space &amp; verifying evidence...</span>
           </div>
         )}
 
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 max-w-xl">
-            <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+          <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-status-failed-bg border border-status-failed-text/30 text-xs text-status-failed-text max-w-xl">
+            <AlertCircle className="w-4 h-4 shrink-0 text-status-failed-text" />
             <span>{error}</span>
           </div>
         )}
@@ -150,11 +189,11 @@ export const ChatContainer: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Multiline composer */}
-      <div className="pt-4 border-t border-zinc-200 bg-zinc-50/50">
+      {/* Glassmorphic Multiline Composer */}
+      <div className="pt-4 border-t border-border-subtle/80 bg-canvas-bg/80 backdrop-blur-xs">
         <form
           onSubmit={handleSubmit}
-          className="relative bg-white rounded-lg border border-zinc-300 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 shadow-2xs transition-all"
+          className="relative glass-panel rounded-2xl p-3 border border-border-subtle focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 shadow-sm transition-all"
         >
           <textarea
             ref={textareaRef}
@@ -162,24 +201,33 @@ export const ChatContainer: React.FC = () => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isLoading}
-            placeholder="Ask something about your documents... (Press Enter to send, Shift+Enter for newline)"
+            placeholder="Ask questions grounded in indexed documents... (Enter to send, Shift+Enter for newline)"
             rows={2}
-            className="w-full resize-none bg-transparent p-3.5 pr-24 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none leading-relaxed"
+            className="w-full resize-none bg-transparent p-1 pr-28 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none leading-relaxed"
           />
 
-          <div className="absolute right-2.5 bottom-2.5 flex items-center gap-2">
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              className={`inline-flex items-center justify-center px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                !input.trim() || isLoading
-                  ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                  : 'bg-zinc-900 hover:bg-zinc-800 text-white cursor-pointer shadow-xs'
-              }`}
-            >
-              <Send className="w-3.5 h-3.5 mr-1" />
-              <span>Send</span>
-            </button>
+          <div className="flex items-center justify-between pt-2 border-t border-border-subtle/60 mt-1">
+            <span className="text-[11px] font-mono text-on-surface-variant/70">
+              Grounding: Strict Verification Active
+            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-on-surface-variant/60 hidden sm:inline font-mono">
+                ↵ Enter
+              </span>
+              <button
+                type="submit"
+                disabled={!input.trim() || isLoading}
+                className={`inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs ${
+                  !input.trim() || isLoading
+                    ? 'bg-surface-container-high text-on-surface-variant/40 cursor-not-allowed'
+                    : 'bg-primary hover:bg-neutral-800 text-on-primary cursor-pointer'
+                }`}
+              >
+                <Send className="w-3.5 h-3.5 mr-1.5" />
+                <span>Send Query</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -192,35 +240,27 @@ export const ChatContainer: React.FC = () => {
 
       {/* LLM Retrieval Context Debug View */}
       {inspectMessage && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl border border-zinc-200">
-            <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-900">
-                Exact Context Passed to LLM
-              </h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="glass-panel rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-border-subtle animate-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-border-subtle flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-on-surface">
+                  Exact Context Injected into LLM Prompt
+                </h3>
+                <span className="text-[10px] font-mono text-secondary">
+                  Retrieved Candidates for Message #{inspectMessage.id.slice(-4)}
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={() => setInspectMessage(null)}
-                className="text-zinc-400 hover:text-zinc-700 text-sm font-medium"
+                className="px-2.5 py-1 rounded-full bg-surface-container-low text-on-surface text-xs font-medium hover:bg-surface-container"
               >
                 Close
               </button>
             </div>
-            <div className="p-4 overflow-y-auto flex-1 font-mono text-xs text-zinc-800 bg-zinc-50 whitespace-pre-wrap leading-relaxed">
+            <div className="p-5 overflow-y-auto flex-1 font-mono text-xs text-zinc-100 bg-zinc-950 rounded-b-xl whitespace-pre-wrap leading-relaxed">
               {inspectMessage.retrievalContext}
-            </div>
-            <div className="p-3 border-t border-zinc-200 flex justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  if (inspectMessage.retrievalContext) {
-                    navigator.clipboard.writeText(inspectMessage.retrievalContext);
-                  }
-                }}
-                className="px-3 py-1.5 rounded bg-zinc-900 text-white text-xs font-medium"
-              >
-                Copy Context
-              </button>
             </div>
           </div>
         </div>
