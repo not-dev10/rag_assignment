@@ -144,3 +144,7 @@ export const defaultEvalTestCases: EvalTestCase[] = [
     notes: 'Must perform inline/client validation without executing LLM call',
   },
 ];
+
+// Compatibility exports for stale HMR caches
+export const mockCollections = [];
+export const mockSearchResults = [];
