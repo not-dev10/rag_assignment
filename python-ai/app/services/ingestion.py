@@ -243,12 +243,12 @@ def create_chunks(
 
         section_chunks = chunk_text(text)
 
-        for i, chunk_text in enumerate(section_chunks):
-            if not chunk_text.strip():
+        for i, chunk in enumerate(section_chunks):
+            if not chunk.strip():
                 continue
 
             chunk_id = str(uuid.uuid4())
-            chunk_hash_val = hashlib.sha256(chunk_text.encode()).hexdigest()
+            chunk_hash_val = hashlib.sha256(chunk.encode()).hexdigest()
 
             chunk_entry: dict = {
                 'chunk_id': chunk_id,
