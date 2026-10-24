@@ -81,6 +81,10 @@ export const ChatContainer: React.FC = () => {
       e.preventDefault();
       handleSubmit();
     }
+    // Shift+Enter inserts a newline
+    if (e.key === 'Shift' && e.shiftKey && !e.target?.disabled) {
+      // Allow shift key processing, textarea handles newline on its own
+    }
   };
 
   const handleClearConversation = () => {
@@ -95,22 +99,21 @@ export const ChatContainer: React.FC = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-100px)]">
-      {/* Top Telemetry & Context Command Bar */}
-      <div className="flex items-center justify-between pb-4 mb-4 border-b border-border-subtle">
+      {/* Top Header */}
+      <header className="flex items-center justify-between pb-4 mb-4 border-b border-border-subtle">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 glass-card px-3.5 py-1.5 rounded-full shadow-2xs border border-border-subtle">
             <span className="w-2 h-2 rounded-full bg-status-indexed-text" />
             <span className="text-xs font-semibold text-on-surface">
-              Enterprise Compliance Hub
+              DocuMind
             </span>
-            <span className="text-[10px] font-mono font-semibold text-accent-sky-text bg-accent-sky-bg px-2 py-0.5 rounded-full border border-accent-sky-border">
+            <span className="text-[10px] font-mono font-semibold text-accent-sky-bg px-2 py-0.5 rounded-full border border-accent-sky-bg">
               Hybrid-v3
             </span>
           </div>
-
           <div className="hidden lg:flex items-center gap-2 text-on-surface-variant text-xs font-mono">
             <Cpu className="w-3.5 h-3.5 text-secondary" />
-            <span>Claude 3.5 + text-embedding-3-large</span>
+            <span>Local Qdrant + text-embedding-3-large</span>
             <span>•</span>
             <span>k=4</span>
             <span>•</span>
@@ -119,6 +122,13 @@ export const ChatContainer: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Health Indicator */}
+          <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle gap-2">
+            <span className="w-3.5 h-3.5 text-status-indexed-text" />
+            <span className="text-xs font-medium text-on-surface">API</span>
+            <span className="w-2 h-2 rounded-full bg-status-indexed-text" />
+          </div>
+
           {/* Grounding Strictness Pill */}
           <div className="flex items-center glass-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle gap-2">
             <Shield className="w-3.5 h-3.5 text-status-indexed-text" />
@@ -133,17 +143,6 @@ export const ChatContainer: React.FC = () => {
               <div className="w-7 h-4 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary" />
             </label>
           </div>
-
-          {messages.length > 0 && (
-            <button
-              type="button"
-              onClick={handleClearConversation}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-card hover:bg-canvas-bg text-xs text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer border border-border-subtle"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Clear</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -155,7 +154,7 @@ export const ChatContainer: React.FC = () => {
               <Sparkles className="w-6 h-6 text-accent-sky-text" />
             </div>
             <div className="text-base font-bold text-on-surface mb-1">
-              Document Grounded Q&amp;A
+              Document Grounded Q&A
             </div>
             <p className="text-xs text-on-surface-variant max-w-sm">
               Type your question below. Answers will be retrieved directly from the indexed Qdrant vector store with clickable citations.
@@ -175,7 +174,7 @@ export const ChatContainer: React.FC = () => {
         {isLoading && (
           <div className="flex items-center gap-3 p-4 rounded-2xl glass-card border border-border-subtle text-xs text-on-surface-variant max-w-md shadow-xs">
             <Loader2 className="w-4 h-4 animate-spin text-secondary shrink-0" />
-            <span>Retrieving chunks from Qdrant vector space &amp; verifying evidence...</span>
+            <span>Retrieving chunks from Qdrant vector space & verifying evidence...</span>
           </div>
         )}
 
@@ -214,6 +213,9 @@ export const ChatContainer: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-on-surface-variant/60 hidden sm:inline font-mono">
                 ↵ Enter
+              </span>
+              <span className="text-[10px] text-on-surface-variant/60 hidden sm:inline font-mono">
+                ⇧ Shift+↵
               </span>
               <button
                 type="submit"

@@ -1,0 +1,391 @@
+import hashlib
+import uuid
+import os
+from pathlib import Path
+from typing import Optional, List
+import pypdf
+from markdown_it import MarkdownIt
+
+from app.config import settings
+
+
+class IngestionError(Exception):
+    pass
+
+
+def compute_content_hash(content: bytes) -> str:
+    """Compute SHA-256 hash of raw file content for duplicate detection."""
+    return hashlib.sha256(content).hexdigest()
+
+
+def extract_text_from_pdf(file_path: Path) -> List[dict]:
+    """Extract text from PDF with page numbers where available.
+
+    Returns list of dicts with 'page_number' and 'text' keys.
+    Returns empty list if PDF has no extractable text.
+    """
+    pages = []
+    try:
+        with open(file_path, 'rb') as f:
+            reader = pypdf.PdfReader(f)
+            for i, page in enumerate(reader.pages):
+                text = page.extract_text()
+                if text and text.strip():
+                    pages.append({
+                        'page_number': i + 1,
+                        'text': text,
+                    })
+    except Exception as e:
+        raise IngestionError(f'Failed to extract text from PDF: {e}')
+    return pages
+
+
+def extract_text_from_markdown(file_path: Path) -> List[dict]:
+    """Extract text from Markdown with section titles where available.
+
+    Returns list of dicts with 'section_title' and 'text' keys.
+    Returns [{section_title: None, text: content}] if text extractable but no headings.
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except UnicodeDecodeError:
+        try:
+            with open(file_path, 'r', encoding='latin-1') as f:
+                content = f.read()
+        except Exception as e:
+            raise IngestionError(f'Failed to read Markdown file: {e}')
+    except Exception as e:
+        raise IngestionError(f'Failed to read Markdown file: {e}')
+
+    if not content.strip():
+        return []
+
+    md = MarkdownIt()
+    tokens = md.parse(content)
+
+    # Build sections by tracking headings
+    sections: List[dict] = []
+    current_section_title: Optional[str] = None
+    current_section_text: List[str] = []
+
+    def flush_section():
+        nonlocal current_section_title, current_section_text
+        if current_section_text:
+            text = '\n'.join(current_section_text).strip()
+            if text:
+                sections.append({
+                    'section_title': current_section_title,
+                    'text': text,
+                })
+        current_section_title = None
+        current_section_text = []
+
+    for token in tokens:
+        if token.type == 'heading_open':
+            # Flush previous section before starting new one
+            flush_section()
+            # heading_open is followed by inline content for the title
+            # We'll capture it via inline tokens
+        elif token.type == 'inline':
+            # Capture inline content as potential heading text
+            if current_section_title is None:
+                # This might be a heading title
+                current_section_title = token.content if token.content else ''
+            else:
+                # Add to existing section text
+                current_section_text.append(token.content if token.content else '')
+        elif token.type == 'paragraph_open':
+            pass
+        elif token.type == 'text':
+            # Regular text content
+            if current_section_title is None:
+                # No heading yet, accumulate as text
+                if 'text' not in locals():
+                    # First time, initialize
+                    current_section_text = [token.content if token.content else '']
+                else:
+                    current_section_text.append(token.content if token.content else '')
+        elif token.type == 'heading_close':
+            # Just mark the heading as done; content already captured
+            pass
+
+    # Flush final section
+    flush_section()
+
+    if not sections:
+        # No headings found; treat entire content as one section
+        return [{'section_title': None, 'text': content.strip()}]
+
+    return sections
+
+
+def extract_text_from_text(file_path: Path) -> List[dict]:
+    """Extract text from plain text file.
+
+    Returns list with one dict containing the full text.
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except UnicodeDecodeError:
+        try:
+            with open(file_path, 'r', encoding='latin-1') as f:
+                content = f.read()
+        except Exception as e:
+            raise IngestionError(f'Failed to read text file: {e}')
+    except Exception as e:
+        raise IngestionError(f'Failed to read text file: {e}')
+
+    if not content.strip():
+        return []
+
+    return [{'section_title': None, 'text': content.strip()}]
+
+
+def extract_text(file_path: Path, mime_type: str) -> List[dict]:
+    """Dispatch to appropriate extractor based on MIME type."""
+    if mime_type == 'application/pdf':
+        return extract_text_from_pdf(file_path)
+    elif mime_type in ('text/markdown', 'text/x-markdown'):
+        return extract_text_from_markdown(file_path)
+    elif mime_type == 'text/plain':
+        return extract_text_from_text(file_path)
+    else:
+        raise IngestionError(f'Unsupported MIME type: {mime_type}')
+
+
+def chunk_text(
+    text: str,
+    chunk_size: int = None,
+    chunk_overlap: int = None,
+) -> List[str]:
+    """Split text into chunks with overlap, respecting paragraph/sentence boundaries.
+
+    Configurable CHUNK_SIZE (default 800) and CHUNK_OVERLAP (default 120).
+    No blank chunks are returned.
+    """
+    if chunk_size is None:
+        chunk_size = settings.CHUNK_SIZE
+    if chunk_overlap is None:
+        chunk_overlap = settings.CHUNK_OVERLAP
+
+    if len(text) <= chunk_size:
+        return [text] if text.strip() else []
+
+    chunks: List[str] = []
+    start = 0
+
+    while start < len(text):
+        end = min(start + chunk_size, len(text))
+
+        if end < len(text):
+            # Try to find a good break point (paragraph, then sentence)
+            paragraph_break = text.rfind('\n\n', start, end)
+            if paragraph_break != -1 and paragraph_break > start + chunk_size // 2:
+                end = paragraph_break + 2
+            else:
+                # Find sentence boundary
+                sentence_break = max(
+                    text.rfind('. ', start, end),
+                    text.rfind('! ', start, end),
+                    text.rfind('? ', start, end),
+                )
+                if sentence_break != -1 and sentence_break > start + chunk_size // 2:
+                    end = sentence_break + 2
+
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+
+        if end >= len(text):
+            break
+
+        # Move start forward with overlap, but not past zero
+        start = end - chunk_overlap
+        if start < 0:
+            start = 0
+
+        # Prevent endless loop: if we're not making progress
+        if start >= end:
+            # Take remaining text as final chunk
+            remaining = text[start:].strip()
+            if remaining and remaining not in chunks:
+                chunks.append(remaining)
+            break
+
+    return chunks
+
+
+def create_chunks(
+    document_id: str,
+    filename: str,
+    content_hash: str,
+    extracted_sections: List[dict],
+    mime_type: str,
+) -> List[dict]:
+    """Create chunks from extracted sections with metadata.
+
+    Returns list of dicts with: chunk_id, text, chunk_index, document_id, filename,
+    content_hash, page_number (if available), section_title (if available),
+    start_char, end_char (offsets when available).
+    """
+    all_chunks: List[dict] = []
+    chunk_index = 0
+
+    for section in extracted_sections:
+        section_title = section.get('section_title')
+        page_number = section.get('page_number')
+        text = section['text']
+
+        if not text.strip():
+            continue
+
+        section_chunks = chunk_text(text)
+
+        for i, chunk_text in enumerate(section_chunks):
+            if not chunk_text.strip():
+                continue
+
+            chunk_id = str(uuid.uuid4())
+            chunk_hash_val = hashlib.sha256(chunk_text.encode()).hexdigest()
+
+            chunk_entry: dict = {
+                'chunk_id': chunk_id,
+                'text': chunk_text,
+                'chunk_index': chunk_index,
+                'document_id': document_id,
+                'filename': filename,
+                'content_hash': chunk_hash_val,
+            }
+
+            # Add metadata available from the section
+            if page_number is not None:
+                chunk_entry['page_number'] = page_number
+            if section_title is not None:
+                chunk_entry['section_title'] = section_title
+
+            # Add start/end character offsets relative to original document
+            # This is approximate since we've already split text
+            # We'll set to None for now; could be computed with more complex tracking
+            chunk_entry['start_char'] = None
+            chunk_entry['end_char'] = None
+
+            all_chunks.append(chunk_entry)
+            chunk_index += 1
+
+    return all_chunks
+
+
+async def process_document(
+    file_path: Path,
+    filename: str,
+    mime_type: str,
+    document_id: str,
+) -> dict:
+    """Main ingestion pipeline: extract text -> chunk -> return processed result.
+
+    Returns dict with:
+    - 'status': 'processing', 'ready', or 'failed'
+    - 'document_id': the stable document ID
+    - 'filename': original filename
+    - 'chunk_count': number of chunks created
+    - 'error_message': if failed, safe error reason
+    - 'content_hash': hash of original file content
+    """
+    # Read raw file content
+    try:
+        content_bytes = file_path.read_bytes()
+    except Exception as e:
+        return {
+            'status': 'failed',
+            'document_id': document_id,
+            'filename': filename,
+            'chunk_count': 0,
+            'error_message': f'Failed to read file: {e}',
+            'content_hash': '',
+        }
+
+    # Compute content hash for duplicate detection
+    content_hash = compute_content_hash(content_bytes)
+
+    # Validate file size
+    max_bytes = settings.MAX_UPLOAD_MB * 1024 * 1024
+    if len(content_bytes) > max_bytes:
+        return {
+            'status': 'failed',
+            'document_id': document_id,
+            'filename': filename,
+            'chunk_count': 0,
+            'error_message': f'File size exceeds maximum of {settings.MAX_UPLOAD_MB}MB',
+            'content_hash': content_hash,
+        }
+
+    # Validate file is not empty
+    if len(content_bytes) == 0:
+        return {
+            'status': 'failed',
+            'document_id': document_id,
+            'filename': filename,
+            'chunk_count': 0,
+            'error_message': 'File is empty',
+            'content_hash': content_hash,
+        }
+
+    # Extract text using appropriate extractor
+    try:
+        extracted_sections = extract_text(file_path, mime_type)
+    except IngestionError as e:
+        return {
+            'status': 'failed',
+            'document_id': document_id,
+            'filename': filename,
+            'chunk_count': 0,
+            'error_message': str(e),
+            'content_hash': content_hash,
+        }
+
+    # Check if any extractable text was found
+    if not extracted_sections:
+        return {
+            'status': 'failed',
+            'document_id': document_id,
+            'filename': filename,
+            'chunk_count': 0,
+            'error_message': 'No extractable text found in document',
+            'content_hash': content_hash,
+        }
+
+    # Create chunks from extracted sections
+    try:
+        chunks = create_chunks(document_id, filename, content_hash, extracted_sections, mime_type)
+    except Exception as e:
+        return {
+            'status': 'failed',
+            'document_id': document_id,
+            'filename': filename,
+            'chunk_count': 0,
+            'error_message': f'Failed to create chunks: {e}',
+            'content_hash': content_hash,
+        }
+
+    # Verify we have chunks
+    if not chunks:
+        return {
+            'status': 'failed',
+            'document_id': document_id,
+            'filename': filename,
+            'chunk_count': 0,
+            'error_message': 'No valid chunks created from document',
+            'content_hash': content_hash,
+        }
+
+    return {
+        'status': 'ready',
+        'document_id': document_id,
+        'filename': filename,
+        'chunk_count': len(chunks),
+        'error_message': None,
+        'content_hash': content_hash,
+        'chunks': chunks,  # Included for internal use; not returned to API
+    }

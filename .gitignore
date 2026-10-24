@@ -1,31 +1,135 @@
-# Secrets
+# ==========================================
+# Environment & Secret Files
+# ==========================================
 .env
 .env.*
-!.env.example
+*.env
+*.env.*
 *.local
+!.env.example
+!*.env.example
+!**/.env.example
 
-# Runtime data / uploaded files
-python-ai/data/
-uploads/
-qdrant_storage/
+# Certificates & keys
+*.pem
+*.key
+*.cert
+*.crt
 
-# Python
+# ==========================================
+# Dependencies & Package Managers
+# ==========================================
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ==========================================
+# Production Builds & Output
+# ==========================================
+dist/
+build/
+out/
+.next/
+.turbo/
+.vercel/
+*.tsbuildinfo
+
+# ==========================================
+# Python & Virtual Environments
+# ==========================================
 __pycache__/
 *.py[cod]
-python-ai/.venv/
+*$py.class
+*.so
+.Python
 .venv/
-.pytest_cache/
-.coverage
-htmlcov/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+*.egg-info/
+*.egg
+.eggs/
+develop-eggs/
+downloads/
+eggs/
+parts/
+sdist/
+var/
+wheels/
+.installed.cfg
 
-# Node / Next.js
-node_modules/
-.next/
-out/
-dist/
+# ==========================================
+# Testing & Code Quality
+# ==========================================
 coverage/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.hypothesis/
+.eslintcache
 
-# OS / editor
+# ==========================================
+# Runtime Data, Storage & Vector DBs
+# ==========================================
+uploads/
+**/uploads/
+data/
+**/data/
+qdrant_storage/
+**/qdrant_storage/
+chroma_db/
+**/chroma_db/
+storage/
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# ==========================================
+# Logs & Diagnostics
+# ==========================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+
+# ==========================================
+# Operating System & Temporary Files
+# ==========================================
 .DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.tmp
+*.temp
+tmp/
+temp/
+
+# ==========================================
+# IDEs & Code Editors
+# ==========================================
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace

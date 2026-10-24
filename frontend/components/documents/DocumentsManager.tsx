@@ -103,52 +103,65 @@ export const DocumentsManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <h2 className="text-xl font-bold text-on-surface tracking-tight">Document Ingestion Pipeline</h2>
-            <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text border border-accent-sky-border">
-              {documents.length} sources
-            </span>
+            <h2 className="text-xl font-bold text-on-surface tracking-tight">
+              DocuMind
+            </h2>
+            <p className="text-xs text-on-surface-variant">
+              Ask questions grounded in your documents
+            </p>
           </div>
-          <p className="text-xs text-on-surface-variant mt-1">
-            Extract text, generate embeddings, and persist searchable vectors into Qdrant collections.
-          </p>
+          <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text border border-accent-sky-text">
+            {documents.length} sources
+          </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-on-surface-variant" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search documents..."
-              className="h-9 pl-9 pr-4 text-xs glass-card rounded-full text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary w-56 transition-all"
-            />
+          {/* Knowledge-base status */}
+          <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle gap-2">
+            <span className="w-2 h-2 rounded-full bg-status-indexed-text" />
+            <span className="text-xs font-medium text-on-surface">
+              Indexed: {documents.length}
+            </span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="h-9 px-4 rounded-full bg-primary hover:bg-neutral-800 text-on-primary text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-xs cursor-pointer"
-          >
-            <Upload className="w-4 h-4 text-accent-sky-border" />
-            <span>Upload File</span>
-          </button>
+          {/* Upload button */}
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-on-surface-variant" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search documents..."
+                className="h-9 pl-9 pr-4 text-xs glass-card rounded-full text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary w-56 transition-all"
+              />
+            </div>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.md,.txt"
-            onChange={(e) => handleFileUpload(e.target.files)}
-            className="hidden"
-          />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="h-9 px-4 rounded-full bg-primary hover:bg-neutral-800 text-on-primary text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+            >
+              <Upload className="w-4 h-4 text-accent-sky-border" />
+              <span>Upload File</span>
+            </button>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.md,.txt"
+              onChange={(e) => handleFileUpload(e.target.files)}
+              className="hidden"
+            />
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Eye-catchy Dropzone with Radial Ambient Glow */}
+      {/* Dropzone */}
       <div
         onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => e.preventDefault()}
@@ -223,7 +236,7 @@ export const DocumentsManager: React.FC = () => {
         )}
 
         {uploadError && (
-          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-status-failed-text bg-status-failed-bg px-4 py-2 rounded-xl border border-status-failed-text/20">
+          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-status-failed-bg px-4 py-2 rounded-xl border border-status-failed-text/20">
             <AlertCircle className="w-4 h-4" />
             <span>{uploadError}</span>
           </div>
@@ -348,7 +361,7 @@ export const DocumentsManager: React.FC = () => {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-5 overflow-y-auto flex-1 font-mono text-xs text-on-surface bg-canvas-bg/90 whitespace-pre-wrap leading-relaxed rounded-b-xl">
+            <div className="p-5 overflow-y-auto flex-1 font-mono text-xs text-on-surface bg-canvas-bg/90 whitespace-pre-wrap leading-relaxed">
               {previewDoc.rawTextPreview}
             </div>
             <div className="p-4 border-t border-border-subtle flex justify-between items-center text-xs text-on-surface-variant">

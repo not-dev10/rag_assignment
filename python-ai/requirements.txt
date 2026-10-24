@@ -1,0 +1,32 @@
+# Core
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.10.0
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+
+# HTTP client
+httpx==0.27.2
+
+# Vector database
+qdrant-client==1.12.1
+
+# Document parsing
+pypdf==4.2.0
+markdown-it-py==3.0.0
+
+# Text processing
+tiktoken==0.8.0
+
+# Utilities
+python-multipart==0.0.9
+
+# Testing
+pytest==8.3.3
+pytest-asyncio==0.23.7
+pytest-mock==3.14.0
+httpx==0.27.2
+
+# Linting / Type checking
+ruff==0.6.5
+mypy==1.11.2
