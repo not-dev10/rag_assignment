@@ -1,7 +1,7 @@
 """Python unit tests for chunking and metadata preservation (Milestone 3)."""
 
 import pytest
-from python_ai.app.services.ingestion import (
+from app.services.ingestion import (
     chunk_text,
     create_chunks,
     extract_text_from_pdf,
@@ -55,13 +55,11 @@ class TestChunkText:
 
     def test_chunk_size_default_800(self):
         """Default chunk_size should be 800."""
-        import python_ai.app.config as config
         chunks = chunk_text("A" * 900)  # Longer than default 800
         assert len(chunks) >= 2
 
     def test_chunk_overlap_default_120(self):
         """Default chunk_overlap should be 120."""
-        import python_ai.app.config as config
         # With text longer than 800+120, overlap should be present
         chunks = chunk_text("A" * 1000)
         assert len(chunks) > 1
@@ -80,7 +78,7 @@ class TestCreateChunks:
             mime_type="application/pdf",
         )
         assert len(chunks) == 1
-        assert chunks[0]["metadata"]["document_id"] == "doc-123"
+        assert chunks[0]["document_id"] == "doc-123"
 
     def test_chunk_metadata_includes_filename(self):
         """Each chunk should have filename in metadata."""
@@ -134,8 +132,8 @@ class TestCreateChunks:
             ],
             mime_type="text/plain",
         )
-        # Text files should not have page_number set
-        assert chunks[0]["page_number"] is None
+        # Text files should not have page_number set (key may not exist)
+        assert chunks[0].get("page_number") is None
 
     def test_section_title_preserved(self):
         """Section titles from Markdown should be preserved."""
@@ -149,8 +147,8 @@ class TestCreateChunks:
             ],
             mime_type="text/x-markdown",
         )
-        assert chunks[0]["metadata"]["section_title"] == "Introduction"
-        assert chunks[1]["metadata"]["section_title"] == "Setup"
+        assert chunks[0]["section_title"] == "Introduction"
+        assert chunks[1]["section_title"] == "Setup"
 
 
 class TestExtractText:
@@ -189,7 +187,8 @@ class TestExtractText:
             assert result[0]["text"] == "Hello world"
             assert result[0]["section_title"] is None
         finally:
-            os.unlink(tmp_path.name)
+            if tmp_path.exists():
+                tmp_path.unlink()
 
 
 class TestEdgeCases:

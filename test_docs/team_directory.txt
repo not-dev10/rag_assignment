@@ -1,0 +1,20 @@
+# Team Directory
+
+## Contact Information
+
+- John Doe: john.doe@company.com - Engineering Manager
+- Jane Smith: jane.smith@company.com - Design Lead  
+- Bob Wilson: bob.wilson@company.com - QA Engineer
+- Sarah Connor: sarah.connor@company.com - People Operations
+
+## Team Locations
+
+- New York Office: 123 Main St, NY 10001
+- London Office: 45 Baker St, London WC2N 5JR
+- Singapore Office: 1 Raffles Place, Singapore 048616
+
+## Department Heads
+
+- Engineering: john.doe@company.com
+- Design: jane.smith@company.com
+- People Ops: sarah.connor@company.com

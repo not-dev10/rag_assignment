@@ -2,24 +2,14 @@
 
 import React, { useState } from 'react';
 import { Citation } from '@/types/chat';
-import { sampleCitations } from '@/lib/mockData';
 import { ApiClient } from '@/lib/api';
 import { FileSearch, Search, FileText, Copy, Check, Terminal, Sparkles } from 'lucide-react';
 
 export const RetrievalInspector: React.FC = () => {
-  const [query, setQuery] = useState('annual leave submission procedure');
-  const [citations, setCitations] = useState<Citation[]>(sampleCitations);
+  const [query, setQuery] = useState('');
+  const [citations, setCitations] = useState<Citation[]>([]);
   const [exactContext, setExactContext] = useState<string>(
-    `[System Prompt Context Injection]
-The following evidence chunks were retrieved from Qdrant using vector similarity:
-
---- CHUNK 1 (employee_handbook.pdf, Page 12, Score: 0.910) ---
-Leave requests must be submitted through the internal employee portal at least 5 business days in advance. A maximum of 5 unused days may be carried over to the following year.
-
---- CHUNK 2 (employee_handbook.pdf, Page 13, Score: 0.840) ---
-Employees receive up to 10 days of paid sick leave annually. Medical documentation is required for continuous absences exceeding 3 business days.
-
-Instructions: Answer the question using ONLY the retrieved chunks above. If the context does not contain the answer, state that explicitly.`
+    'Enter a search query above and click "Inspect Retrieval" to execute vector search against Qdrant and view the exact retrieved chunks.'
   );
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);

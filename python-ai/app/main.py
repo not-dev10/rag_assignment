@@ -5,6 +5,7 @@ from pydantic import ValidationError
 import uuid
 import os
 import shutil
+import hashlib
 from pathlib import Path
 
 from app.config import settings
@@ -19,6 +20,8 @@ from app.schemas import (
 )
 from app.services.ingestion import process_document, IngestionError
 from app.services.vector_store import get_vector_store, VectorStoreError
+from app.services.retrieval import retrieve_chunks, RetrievalError
+from app.services.generation import generate_answer, GenerationError
 from app.schemas import Chunk
 from typing import List
 
@@ -93,15 +96,55 @@ async def runtime_error_handler(request: Request, exc: RuntimeError):
 async def health_check():
     vector_store = get_vector_store()
     healthy = vector_store.health_check()
+    from app.services.generation import get_llm_provider, OpenRouterProvider, OpenAIProvider
+    from app.services.embeddings import get_embedding_provider
 
-    return HealthResponse(status='ok' if healthy else 'degraded')
+    llm = get_llm_provider()
+    emb = get_embedding_provider()
+
+    if isinstance(llm, OpenRouterProvider):
+        llm_label = f"OpenRouter ({llm.model_name})"
+    elif isinstance(llm, OpenAIProvider):
+        llm_label = f"OpenAI ({llm.model_name})"
+    else:
+        llm_label = "MockLLMProvider (Offline Fallback)"
+
+    return HealthResponse(
+        status='ok' if healthy else 'degraded',
+        vector_store='connected' if healthy else 'disconnected',
+        llm_provider=llm_label,
+        embedding_model=emb.model_name,
+    )
+
+
+@app.get('/v1/models')
+async def list_models():
+    """Dummy endpoint to prevent 404s from OpenAI-compatible client probes."""
+    return {
+        'object': 'list',
+        'data': [
+            {'id': settings.LLM_MODEL, 'object': 'model', 'owned_by': 'openrouter'},
+            {'id': settings.EMBEDDING_MODEL, 'object': 'model', 'owned_by': 'openai'},
+        ]
+    }
 
 
 @app.post('/documents/ingest', response_model=DocumentIngestResponse)
 async def ingest_document(file: UploadFile = File(...)):
     # Validate file type
-    allowed_types = ['application/pdf', 'text/markdown', 'text/plain', 'text/x-markdown']
-    if file.content_type not in allowed_types:
+    allowed_types = [
+        'application/pdf',
+        'text/markdown',
+        'text/plain',
+        'text/x-markdown',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/docx',
+        'application/msword',
+    ]
+    filename_lower = (file.filename or '').lower()
+    is_valid_type = file.content_type in allowed_types or filename_lower.endswith(('.pdf', '.md', '.markdown', '.txt', '.docx'))
+
+    if not is_valid_type:
         raise HTTPException(
             status_code=400,
             detail={
@@ -142,6 +185,37 @@ async def ingest_document(file: UploadFile = File(...)):
     # Compute content hash for duplicate detection
     content_hash = hashlib.sha256(content).hexdigest()
 
+    # Check if this content already exists in Qdrant
+    vector_store = get_vector_store()
+    try:
+        scroll_result = vector_store.client.scroll(
+            collection_name=settings.QDRANT_COLLECTION,
+            limit=100,
+            with_payload=True,
+            with_vectors=False,
+        )
+        existing_points = [p for p in scroll_result[0] if p.payload and p.payload.get('content_hash') == content_hash]
+        if existing_points:
+            # Document already indexed - return existing document info
+            # Use the first existing point's document_id
+            existing_doc_id = existing_points[0].payload.get('document_id')
+            # Count total chunks for this document
+            doc_chunk_count = sum(1 for p in scroll_result[0] if p.payload and p.payload.get('document_id') == existing_doc_id)
+            # Return existing document status
+            return JSONResponse(
+                status_code=200,
+                content={
+                    'document_id': existing_doc_id,
+                    'filename': existing_points[0].payload.get('filename', file.filename),
+                    'status': 'ready',
+                    'chunk_count': doc_chunk_count,
+                    'duplicate': True
+                },
+            )
+    except Exception:
+        # If check fails, proceed with normal ingestion
+        pass
+
     # Generate document ID
     document_id = str(uuid.uuid4())
 
@@ -176,7 +250,7 @@ async def ingest_document(file: UploadFile = File(...)):
         # Upsert chunks to Qdrant
         vector_store = get_vector_store()
         if result['chunks']:
-            upserted_count = vector_store.upsert_chunks(result['chunks'])
+            upserted_count = await vector_store.upsert_chunks(result['chunks'])
         else:
             upserted_count = 0
 
@@ -254,12 +328,20 @@ async def list_documents():
             if not doc_id:
                 continue
 
+            fn = payload.get('filename', 'unknown')
+            mime = 'text/plain'
+            if fn.endswith('.pdf'):
+                mime = 'application/pdf'
+            elif fn.endswith('.md'):
+                mime = 'text/markdown'
+
             if doc_id not in doc_map:
                 doc_map[doc_id] = {
                     'document_id': doc_id,
-                    'filename': payload.get('filename', 'unknown'),
+                    'filename': fn,
+                    'mime_type': mime,
                     'content_hash': payload.get('content_hash', ''),
-                    'uploaded_at': '',  # Not stored currently
+                    'uploaded_at': '2024-01-01T00:00:00Z',
                     'status': DocumentStatus.READY,
                     'chunk_count': 0,
                 }
@@ -269,8 +351,9 @@ async def list_documents():
             {
                 'document_id': doc['document_id'],
                 'filename': doc['filename'],
+                'mime_type': doc['mime_type'],
                 'content_hash': doc['content_hash'],
-                'uploaded_at': doc['uploaded_at'] or '2024-01-01T00:00:00Z',
+                'uploaded_at': doc['uploaded_at'],
                 'status': doc['status'],
                 'chunk_count': doc['chunk_count'],
             }
@@ -328,6 +411,53 @@ async def delete_document(document_id: str):
                 }
             },
         )
+
+
+@app.post('/ask', response_model=AskResponse)
+async def ask_question(body: AskRequest):
+    try:
+        retrieved = await retrieve_chunks(body.question, document_id=body.document_id)
+        answer, status, sources, context = await generate_answer(body.question, retrieved)
+        return AskResponse(
+            answer=answer,
+            status=status,
+            sources=sources,
+            retrieval_context=context,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                'error': {
+                    'code': 'RETRIEVAL_FAILED',
+                    'message': f'Failed to process question: {str(e)}',
+                }
+            },
+        )
+
+
+@app.get('/documents/{document_id}/suggestions')
+async def get_document_suggestions(document_id: str):
+    vector_store = get_vector_store()
+    chunks = vector_store.get_chunks_by_document_id(document_id, limit=6)
+    if not chunks:
+        raise HTTPException(
+            status_code=404,
+            detail={'error': {'code': 'DOCUMENT_NOT_FOUND', 'message': f'Document {document_id} not found'}},
+        )
+
+    filename = chunks[0].get('filename', 'document')
+    combined_text = "\n\n".join(c.get('text', '')[:700] for c in chunks[:4])
+
+    from app.services.generation import get_llm_provider
+    llm = get_llm_provider()
+    suggestions = await llm.generate_document_suggestions(filename, combined_text)
+
+    return {
+        'document_id': document_id,
+        'filename': filename,
+        'suggestions': suggestions,
+    }
 
 
 if __name__ == '__main__':

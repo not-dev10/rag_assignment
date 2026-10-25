@@ -18,6 +18,9 @@ function createClient(): AxiosInstance {
   instance.interceptors.request.use(
     (req: InternalAxiosRequestConfig) => {
       req.headers['X-Request-ID'] = (req as any).requestId || 'unknown';
+      if (typeof FormData !== 'undefined' && req.data instanceof FormData) {
+        delete req.headers['Content-Type'];
+      }
       return req;
     },
     (error) => Promise.reject(error)
@@ -64,6 +67,9 @@ export function resetAIClient(): void {
 
 export interface HealthResponse {
   status: string;
+  vector_store?: string;
+  llm_provider?: string;
+  embedding_model?: string;
 }
 
 export interface DocumentIngestResponse {
@@ -105,13 +111,14 @@ export interface AskResponse {
   answer: string;
   status: 'answered' | 'fallback';
   sources: Source[];
+  retrieval_context?: string;
 }
 
-export async function checkPythonHealth(): Promise<{ healthy: boolean; details?: string }> {
+export async function checkPythonHealth(): Promise<{ healthy: boolean; details?: any }> {
   try {
     const axiosClient = getAIClient();
     const response = await axiosClient.get<HealthResponse>('/health');
-    return { healthy: response.data.status === 'ok' };
+    return { healthy: response.data.status === 'ok', details: response.data };
   } catch (error) {
     return { healthy: false, details: error instanceof Error ? error.message : 'Unknown error' };
   }
@@ -130,7 +137,7 @@ export async function ingestDocument(
 
   const response = await axiosClient.post<DocumentIngestResponse>('/documents/ingest', formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      'Content-Type': undefined,
       'X-Request-ID': requestId,
     },
   });
@@ -152,12 +159,27 @@ export async function deleteDocument(documentId: string, requestId: string): Pro
   });
 }
 
-export async function askQuestion(question: string, requestId: string): Promise<AskResponse> {
+export async function askQuestion(
+  question: string,
+  requestId: string,
+  documentId?: string
+): Promise<AskResponse> {
   const axiosClient = getAIClient();
   const response = await axiosClient.post<AskResponse>(
     '/ask',
-    { question } as AskRequest,
+    { question, document_id: documentId },
     { headers: { 'X-Request-ID': requestId } }
   );
+  return response.data;
+}
+
+export async function getDocumentSuggestions(
+  documentId: string,
+  requestId: string
+): Promise<{ document_id: string; filename: string; suggestions: Array<{ label: string; query: string; category?: string }> }> {
+  const axiosClient = getAIClient();
+  const response = await axiosClient.get(`/documents/${documentId}/suggestions`, {
+    headers: { 'X-Request-ID': requestId },
+  });
   return response.data;
 }

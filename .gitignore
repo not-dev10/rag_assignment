@@ -133,3 +133,13 @@ temp/
 *~
 *.sublime-project
 *.sublime-workspace
+Mahi_Patel_Resume.pdf
+system_env_notes.txt
+deep_space_comms.docx
+
+# ==========================================
+# Documentation (Tracked)
+# ==========================================
+!developdoc/
+!developdoc/**
+

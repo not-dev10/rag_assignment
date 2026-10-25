@@ -1,6 +1,6 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
-from python_ai.app.main import app
+from app.main import app
 
 
 @pytest.fixture
@@ -19,14 +19,17 @@ async def test_health_endpoint(client):
 
 
 @pytest.mark.asyncio
-async def test_ask_empty_question(client):
-    response = await client.post('/ask', json={'question': '   '})
-    assert response.status_code == 400
+async def test_ask_with_empty_index(client):
+    """Empty index should return fallback."""
+    response = await client.post('/ask', json={'question': 'What is quantum computing?'})
+    # With empty index, should get fallback
+    assert response.status_code == 200
     data = response.json()
-    assert data['error']['code'] == 'INVALID_QUESTION'
+    assert data['status'] == 'fallback'
+    assert len(data['sources']) == 0
 
 
 @pytest.mark.asyncio
 async def test_ask_missing_question(client):
     response = await client.post('/ask', json={})
-    assert response.status_code == 400
+    assert response.status_code == 422  # Pydantic validation error

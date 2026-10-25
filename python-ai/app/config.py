@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     LLM_MODEL: str = Field(default='gpt-4o-mini')
     EMBEDDING_MODEL: str = Field(default='text-embedding-3-small')
     OPENAI_API_KEY: str = Field(default='')
+    OPENROUTER_API_KEY: Optional[str] = Field(default=None)
+    OPENROUTER_BASE_URL: str = Field(default='https://openrouter.ai/api/v1')
 
     # Qdrant
     QDRANT_URL: str = Field(default='http://localhost:6333')

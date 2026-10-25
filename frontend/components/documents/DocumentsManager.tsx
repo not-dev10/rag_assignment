@@ -2,7 +2,6 @@
 
 import React, { useState, useRef } from 'react';
 import { DocumentItem, IngestionStage } from '@/types/document';
-import { sampleDocuments } from '@/lib/mockData';
 import { ApiClient } from '@/lib/api';
 import {
   Upload,
@@ -19,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const DocumentsManager: React.FC = () => {
-  const [documents, setDocuments] = useState<DocumentItem[]>(sampleDocuments);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);  // Start with empty array
   const [searchTerm, setSearchTerm] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [currentUploadStage, setCurrentUploadStage] = useState<IngestionStage | null>(null);
@@ -28,6 +27,20 @@ export const DocumentsManager: React.FC = () => {
   const [reindexingId, setReindexingId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Load documents on mount
+  React.useEffect(() => {
+    loadDocuments();
+  }, []);
+  
+  const loadDocuments = async () => {
+    try {
+      const docs = await ApiClient.getDocuments();
+      setDocuments(docs);
+    } catch (err) {
+      console.error('Failed to load documents:', err);
+    }
+  };
 
   const filteredDocuments = documents.filter((doc) =>
     doc.filename.toLowerCase().includes(searchTerm.toLowerCase())
@@ -37,11 +50,11 @@ export const DocumentsManager: React.FC = () => {
     if (!files || files.length === 0) return;
     const file = files[0];
 
-    const validExtensions = ['.pdf', '.md', '.txt'];
+    const validExtensions = ['.pdf', '.md', '.txt', '.docx'];
     const hasValidExt = validExtensions.some((ext) => file.name.toLowerCase().endsWith(ext));
 
     if (!hasValidExt) {
-      setUploadError('Unsupported file format. Please upload .pdf, .md, or .txt files.');
+      setUploadError('Unsupported file format. Please upload .pdf, .docx, .md, or .txt files.');
       return;
     }
 
@@ -59,6 +72,9 @@ export const DocumentsManager: React.FC = () => {
         setCurrentUploadStage(stage);
       });
       setDocuments((prev) => [newDoc, ...prev]);
+      
+      // Refresh document list from backend to get accurate data
+      await loadDocuments();
     } catch (err: any) {
       setUploadError(err.message || 'File ingestion failed. Please try again.');
     } finally {
@@ -75,10 +91,17 @@ export const DocumentsManager: React.FC = () => {
       return;
     }
 
-    await ApiClient.deleteDocument(doc.id);
-    setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
-    if (previewDoc?.id === doc.id) {
-      setPreviewDoc(null);
+    try {
+      await ApiClient.deleteDocument(doc.id);
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+      if (previewDoc?.id === doc.id) {
+        setPreviewDoc(null);
+      }
+      
+      // Refresh document list from backend
+      await loadDocuments();
+    } catch (err: any) {
+      alert('Failed to delete document: ' + (err.message || 'Unknown error'));
     }
   };
 
@@ -86,6 +109,11 @@ export const DocumentsManager: React.FC = () => {
     setReindexingId(doc.id);
     try {
       await ApiClient.reindexDocument(doc.id);
+      
+      // Refresh document list from backend
+      await loadDocuments();
+    } catch (err: any) {
+      alert('Failed to reindex: ' + (err.message || 'Unknown error'));
     } finally {
       setReindexingId(null);
     }
@@ -153,7 +181,7 @@ export const DocumentsManager: React.FC = () => {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.md,.txt"
+              accept=".pdf,.docx,.md,.txt"
               onChange={(e) => handleFileUpload(e.target.files)}
               className="hidden"
             />
@@ -179,7 +207,7 @@ export const DocumentsManager: React.FC = () => {
             <Upload className="w-6 h-6" />
           </div>
           <h3 className="text-sm font-bold text-on-surface mb-1">
-            Drop PDF, Markdown, or Plain Text files here
+            Drop PDF, DOCX, Markdown, or Plain Text files here
           </h3>
           <p className="text-xs text-on-surface-variant mb-4">
             or <span className="text-secondary font-semibold underline underline-offset-2">browse files</span> from your local filesystem
@@ -188,6 +216,9 @@ export const DocumentsManager: React.FC = () => {
           <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] font-mono text-on-surface-variant">
             <span className="px-3 py-1 rounded-full glass-card border border-border-subtle shadow-2xs">
               PDF (.pdf)
+            </span>
+            <span className="px-3 py-1 rounded-full glass-card border border-border-subtle shadow-2xs">
+              DOCX (.docx)
             </span>
             <span className="px-3 py-1 rounded-full glass-card border border-border-subtle shadow-2xs">
               Markdown (.md)

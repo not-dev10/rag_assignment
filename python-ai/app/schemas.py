@@ -35,10 +35,14 @@ class DocumentListResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str = 'ok'
+    vector_store: Optional[str] = 'connected'
+    llm_provider: Optional[str] = None
+    embedding_model: Optional[str] = None
 
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
+    document_id: Optional[str] = None
 
 
 class Source(BaseModel):
@@ -58,6 +62,7 @@ class AskResponse(BaseModel):
     answer: str
     status: AskStatus
     sources: List[Source] = []
+    retrieval_context: Optional[str] = None  # Raw context passed to LLM for debugging
 
 
 class ErrorResponse(BaseModel):

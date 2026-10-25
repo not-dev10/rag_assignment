@@ -47,8 +47,8 @@ export const SettingsManager: React.FC = () => {
                 }
                 className="w-full h-10 px-3.5 glass-card border border-border-subtle rounded-xl text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary text-xs"
               >
+                <option value="openai">OpenRouter / OpenAI (GPT-4o-mini)</option>
                 <option value="anthropic">Anthropic (Claude 3.5 Sonnet)</option>
-                <option value="openai">OpenAI (GPT-4o)</option>
                 <option value="ollama">Local (Ollama / Llama 3)</option>
               </select>
             </div>
@@ -65,7 +65,7 @@ export const SettingsManager: React.FC = () => {
 
             <div className="sm:col-span-2">
               <label className="block text-on-surface font-semibold mb-1.5">
-                Embedding Model (Vector Output Dimension: 3072)
+                Embedding Model (Vector Output Dimension: 1536)
               </label>
               <input
                 type="text"

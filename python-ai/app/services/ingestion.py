@@ -143,15 +143,73 @@ def extract_text_from_text(file_path: Path) -> List[dict]:
     return [{'section_title': None, 'text': content.strip()}]
 
 
+def extract_text_from_docx(file_path: Path) -> List[dict]:
+    """Extract text and headings from DOCX file."""
+    try:
+        import docx
+        doc = docx.Document(file_path)
+        sections = []
+        current_section = None
+        current_text = []
+
+        def flush():
+            nonlocal current_section, current_text
+            if current_text:
+                joined = '\n'.join(current_text).strip()
+                if joined:
+                    sections.append({
+                        'section_title': current_section,
+                        'text': joined,
+                    })
+            current_section = None
+            current_text = []
+
+        for p in doc.paragraphs:
+            text = p.text.strip()
+            if not text:
+                continue
+            if p.style and p.style.name and 'heading' in p.style.name.lower():
+                flush()
+                current_section = text
+            else:
+                current_text.append(text)
+
+        flush()
+        if not sections:
+            full_text = '\n'.join(p.text for p in doc.paragraphs if p.text.strip())
+            if full_text.strip():
+                return [{'section_title': None, 'text': full_text.strip()}]
+            return []
+        return sections
+    except Exception as e:
+        raise IngestionError(f'Failed to extract text from DOCX: {e}')
+
+
 def extract_text(file_path: Path, mime_type: str) -> List[dict]:
-    """Dispatch to appropriate extractor based on MIME type."""
+    """Dispatch to appropriate extractor based on MIME type or file extension."""
+    docx_types = (
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/docx',
+        'application/msword',
+    )
     if mime_type == 'application/pdf':
         return extract_text_from_pdf(file_path)
     elif mime_type in ('text/markdown', 'text/x-markdown'):
         return extract_text_from_markdown(file_path)
     elif mime_type == 'text/plain':
         return extract_text_from_text(file_path)
+    elif mime_type in docx_types:
+        return extract_text_from_docx(file_path)
     else:
+        suffix = file_path.suffix.lower()
+        if suffix == '.docx':
+            return extract_text_from_docx(file_path)
+        elif suffix in ('.md', '.markdown'):
+            return extract_text_from_markdown(file_path)
+        elif suffix == '.txt':
+            return extract_text_from_text(file_path)
+        elif suffix == '.pdf':
+            return extract_text_from_pdf(file_path)
         raise IngestionError(f'Unsupported MIME type: {mime_type}')
 
 
@@ -252,7 +310,7 @@ def create_chunks(
 
             chunk_entry: dict = {
                 'chunk_id': chunk_id,
-                'text': chunk_text,
+                'text': chunk,
                 'chunk_index': chunk_index,
                 'document_id': document_id,
                 'filename': filename,

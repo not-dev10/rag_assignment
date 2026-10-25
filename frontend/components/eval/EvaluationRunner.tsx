@@ -1,14 +1,64 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EvalTestCase } from '@/types/eval';
-import { defaultEvalTestCases } from '@/lib/mockData';
-import { ApiClient } from '@/lib/api';
-import { Play, RotateCw, CheckCircle2, XCircle, Clock, ShieldCheck } from 'lucide-react';
+import { ApiClient, generateDynamicSuggestions } from '@/lib/api';
+import { Play, RotateCw, CheckCircle2, XCircle, Clock, ShieldCheck, FileText, Sparkles } from 'lucide-react';
+
+const UNIVERSAL_TEST_CASES: EvalTestCase[] = [
+  {
+    id: 'test-unanswerable',
+    scenarioId: 'T01',
+    name: 'Unanswerable Query: External Out-of-Domain',
+    query: 'What is the current temperature and atmospheric pressure in Tokyo today?',
+    expectedOutcome: 'fallback',
+    status: 'idle',
+    notes: 'Verifies strict grounding and honest fallback abstention without hallucination',
+  },
+  {
+    id: 'test-validation',
+    scenarioId: 'T02',
+    name: 'Validation Error: Blank Whitespace Query',
+    query: '   ',
+    expectedOutcome: 'validation_error',
+    status: 'idle',
+    notes: 'Verifies client and API validation rejects empty input before running LLM',
+  },
+];
 
 export const EvaluationRunner: React.FC = () => {
-  const [testCases, setTestCases] = useState<EvalTestCase[]>(defaultEvalTestCases);
+  const [testCases, setTestCases] = useState<EvalTestCase[]>(UNIVERSAL_TEST_CASES);
   const [isRunningAll, setIsRunningAll] = useState(false);
+  const [hasLoadedDocs, setHasLoadedDocs] = useState(false);
+
+  useEffect(() => {
+    ApiClient.getDocuments()
+      .then((docs) => {
+        if (docs.length > 0) {
+          const suggestions = generateDynamicSuggestions(docs);
+          const dynamicTests: EvalTestCase[] = docs.slice(0, 3).map((doc, idx) => {
+            const matchingSug = suggestions.find((s) => s.query.includes(doc.filename)) || suggestions[idx];
+            const testQuery = matchingSug
+              ? matchingSug.query
+              : `What is the main topic and overview of ${doc.filename}?`;
+
+            return {
+              id: `test-grounded-${doc.id}`,
+              scenarioId: `T0${idx + 3}`,
+              name: `Grounded Query: ${doc.filename}`,
+              query: testQuery,
+              expectedOutcome: 'grounded',
+              status: 'idle',
+              notes: `Verifies grounded retrieval and citation metadata for indexed document ${doc.filename}`,
+            };
+          });
+
+          setTestCases([...dynamicTests, ...UNIVERSAL_TEST_CASES]);
+        }
+        setHasLoadedDocs(true);
+      })
+      .catch(() => setHasLoadedDocs(true));
+  }, []);
 
   const runSingleTest = async (testId: string) => {
     setTestCases((prev) =>

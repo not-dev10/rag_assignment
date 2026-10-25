@@ -1,7 +1,6 @@
 import { ChatMessage, Citation } from '@/types/chat';
 import { DocumentItem, IngestionStage } from '@/types/document';
 import { EvalTestCase } from '@/types/eval';
-import { sampleDocuments, sampleCitations } from './mockData';
 
 const BASE_URL = process.env.NEXT_PUBLIC_NODE_API_URL || process.env.NODE_API_BASE_URL || 'http://127.0.0.1:4000';
 
@@ -41,102 +40,102 @@ export class ApiClient {
   }
 
   // Ask question (POST /api/ask)
-  static async askQuestion(question: string, signal?: AbortSignal): Promise<AskResponse> {
+  static async askQuestion(question: string, documentId?: string, signal?: AbortSignal): Promise<AskResponse> {
     const trimmed = question.trim();
     if (!trimmed) {
       throw new Error('Question cannot be empty or whitespace.');
     }
 
     try {
-      return await this.request<AskResponse>('/api/ask', {
+      const response = await this.request<AskResponse>('/api/ask', {
         method: 'POST',
-        body: JSON.stringify({ question: trimmed }),
+        body: JSON.stringify({
+          question: trimmed,
+          document_id: documentId && documentId !== 'all' ? documentId : undefined,
+        }),
         signal,
       });
-    } catch (err: any) {
-      // Offline fallback behavior strictly adhering to docs/ui.md and docs/testing.md
-      await new Promise((r) => setTimeout(r, 450));
-
-      const lower = trimmed.toLowerCase();
-      const isUnrelated = lower.includes('weather') || lower.includes('temperature') || lower.includes('paris') || lower.includes('stock');
-
-      if (isUnrelated) {
-        return {
-          answer: 'The uploaded documents do not contain information to answer this question. Please refer to or upload documents regarding employee policies, system architecture, or indexing notes.',
-          citations: [],
-          isFallback: true,
-          retrievalContext: 'No relevant chunks found above similarity threshold (0.75). LLM generation skipped to avoid speculation.',
-          latencyMs: 140,
-        };
-      }
-
-      if (lower.includes('leave') || lower.includes('vacation') || lower.includes('annual')) {
-        return {
-          answer: 'Annual leave requests must be submitted through the internal employee portal at least 5 business days in advance. Employees accrue 20 paid leave days annually, and up to 5 unused days may be carried over [1].',
-          citations: [sampleCitations[0]],
-          isFallback: false,
-          retrievalContext: `[Retrieved Chunk #3] Source: employee_handbook.pdf (Page 12, Section 3.1)
-"Employees accrue 20 days of paid annual leave per calendar year. Leave requests must be submitted through the internal employee portal at least 5 business days in advance. A maximum of 5 unused days may be carried over to the following year."`,
-          latencyMs: 310,
-        };
-      }
-
-      if (lower.includes('dimension') || lower.includes('qdrant') || lower.includes('vector')) {
-        return {
-          answer: 'The Qdrant index configuration specifies a vector dimension of 3072 using Cosine distance, compatible with the text-embedding-3-large embedding model [1].',
-          citations: [
-            {
-              id: 'cite-qdrant',
-              documentId: 'doc-3',
-              filename: 'qdrant_indexing_notes.txt',
-              chunkIndex: 1,
-              sectionTitle: 'Qdrant Index Configuration',
-              excerpt: 'Distance metric: Cosine. Vector dimension: 3072 (compatible with text-embedding-3-large).',
-              relevanceScore: 0.94,
-            },
-          ],
-          isFallback: false,
-          retrievalContext: `[Retrieved Chunk #1] Source: qdrant_indexing_notes.txt
-"Qdrant Index Configuration:
-- Distance metric: Cosine
-- Vector dimension: 3072 (compatible with text-embedding-3-large)
-- Payload schema: document_id, filename, chunk_index, page_number, section_title, text."`,
-          latencyMs: 285,
-        };
-      }
-
-      // Default grounded answer for general inquiries
-      return {
-        answer: `According to the system architecture and policy documentation, service orchestration flows from the Next.js frontend to the Node.js API gateway, which routes ingestion and vector retrieval queries to the dedicated Python/FastAPI microservice [1].`,
-        citations: [
-          {
-            id: 'cite-arch',
-            documentId: 'doc-2',
-            filename: 'architecture_overview.md',
-            chunkIndex: 2,
-            sectionTitle: 'Section 1: Service Boundaries',
-            excerpt: '1. Next.js Frontend: Presentation, chat state. 2. Node.js API: Public gateway, validation. 3. Python AI Microservice: Text extraction, semantic chunking, embeddings, and Qdrant storage.',
-            relevanceScore: 0.88,
-          },
-        ],
-        isFallback: false,
-        retrievalContext: `[Retrieved Chunk #2] Source: architecture_overview.md
-"Service Boundaries:
-1. Next.js Frontend: Presentation, chat state, citation inspection.
-2. Node.js API: Public gateway, file validation, rate limiting.
-3. Python AI Microservice: Text extraction, semantic chunking, embeddings generation, vector storage in Qdrant."`,
-        latencyMs: 340,
-      };
+      
+      console.log('API Response:', response);
+      return response;
+    } catch (error) {
+      console.error('Failed to ask question:', error);
+      throw error;
     }
   }
 
   // Get documents (GET /api/documents)
   static async getDocuments(): Promise<DocumentItem[]> {
     try {
-      return await this.request<DocumentItem[]>('/api/documents');
-    } catch {
-      return sampleDocuments;
+      const res = await this.request<any>('/api/documents');
+      const rawList = Array.isArray(res) ? res : (res?.documents || []);
+      
+      return rawList.map((d: any, idx: number) => ({
+        id: d.document_id || d.id || `doc-${idx}`,
+        filename: d.filename || 'Untitled Document',
+        mimeType: d.mime_type || 'application/octet-stream',
+        sizeBytes: d.size_bytes || 1024,
+        chunkCount: d.chunk_count || 1,
+        stage: (d.status === 'ready' ? 'indexed' : d.status) as IngestionStage,
+        uploadedAt: d.uploaded_at ? new Date(d.uploaded_at).toLocaleDateString() : 'Recently',
+      }));
+    } catch (err) {
+      console.error('Failed to fetch documents:', err);
+      // Return empty array instead of sample data
+      return [];
     }
+  }
+
+  // Get document suggestions (GET /api/documents/:documentId/suggestions)
+  static async getDocumentSuggestions(documentId: string): Promise<Array<{ label: string; query: string; category?: string }>> {
+    try {
+      const res = await this.request<any>(`/api/documents/${documentId}/suggestions`);
+      if (res && Array.isArray(res.suggestions)) {
+        return res.suggestions;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }
+
+  static generateDynamicSuggestions(documents: DocumentItem[]): Array<{ label: string; query: string; category?: string }> {
+    const suggestions: Array<{ label: string; query: string; category?: string }> = [];
+    const seenQueries = new Set<string>();
+
+    const add = (label: string, query: string, category = 'General') => {
+      if (!seenQueries.has(query)) {
+        seenQueries.add(query);
+        suggestions.push({ label, query, category });
+      }
+    };
+
+    for (const doc of documents) {
+      const fn = doc.filename.toLowerCase();
+      const cleanName = doc.filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ').trim();
+      const shortTitle = cleanName.length > 20 ? cleanName.substring(0, 18) + '...' : cleanName;
+
+      if (fn.includes('resume') || fn.includes('cv')) {
+        add(`${shortTitle} Profile`, `What is the professional background and experience outlined in ${doc.filename}?`, 'Candidate');
+        add(`Technical Skills`, `What technical skills, programming languages, and tools are listed in ${doc.filename}?`, 'Skills');
+        add(`Education & Projects`, `What education, degrees, and notable projects are described in ${doc.filename}?`, 'Projects');
+      } else if (fn.includes('handbook') || fn.includes('policy') || fn.includes('guide')) {
+        add(`${shortTitle} Policies`, `What are the primary rules, policies, and procedures outlined in ${doc.filename}?`, 'Policy');
+        add(`Leave & Benefits`, `What are the leave policies, allowances, or employee benefits mentioned in ${doc.filename}?`, 'HR');
+      } else if (fn.includes('spec') || fn.includes('architecture') || fn.includes('tech') || fn.includes('api')) {
+        add(`System Architecture`, `What is the system design and architecture described in ${doc.filename}?`, 'Architecture');
+        add(`Technical Requirements`, `What are the key technical specifications and requirements in ${doc.filename}?`, 'Specs');
+      } else {
+        add(`${shortTitle} Summary`, `What is the main topic and key takeaways of ${doc.filename}?`, 'Overview');
+        add(`Key Details`, `What specific details, findings, or instructions are documented in ${doc.filename}?`, 'Details');
+      }
+    }
+
+    if (suggestions.length === 0) {
+      add('Knowledge Base Overview', 'What documents are indexed in this knowledge base and what topics do they cover?', 'Overview');
+    }
+
+    return suggestions;
   }
 
   // Upload document with multi-stage progress
@@ -144,32 +143,58 @@ export class ApiClient {
     file: File,
     onStageUpdate?: (stage: IngestionStage) => void
   ): Promise<DocumentItem> {
-    onStageUpdate?.('uploaded');
-    await new Promise((r) => setTimeout(r, 200));
+    try {
+      onStageUpdate?.('uploaded');
+      
+      // Create FormData with the file
+      const formData = new FormData();
+      formData.append('file', file);
 
-    onStageUpdate?.('parsed');
-    await new Promise((r) => setTimeout(r, 250));
+      // Upload to backend
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
-    onStageUpdate?.('chunked');
-    await new Promise((r) => setTimeout(r, 250));
+      onStageUpdate?.('parsed');
+      
+      const response = await fetch(`${BASE_URL}/api/documents`, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+        // Don't set Content-Type header - browser will set it with boundary
+      });
 
-    onStageUpdate?.('embedded');
-    await new Promise((r) => setTimeout(r, 300));
+      clearTimeout(timeout);
 
-    onStageUpdate?.('indexed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `Upload failed: ${response.statusText}`);
+      }
 
-    const newDoc: DocumentItem = {
-      id: `doc-${Date.now()}`,
-      filename: file.name,
-      mimeType: file.type || 'text/plain',
-      sizeBytes: file.size,
-      chunkCount: Math.max(1, Math.ceil(file.size / 1800)),
-      stage: 'indexed',
-      uploadedAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
-      rawTextPreview: `Preview of uploaded file ${file.name}. Content extracted and indexed into Qdrant vector space across ${Math.max(1, Math.ceil(file.size / 1800))} chunks.`,
-    };
+      onStageUpdate?.('chunked');
+      
+      const result = await response.json();
+      
+      onStageUpdate?.('embedded');
+      
+      // Small delay for UX
+      await new Promise((r) => setTimeout(r, 200));
+      
+      onStageUpdate?.('indexed');
 
-    return newDoc;
+      // Convert backend response to DocumentItem
+      return {
+        id: result.document_id,
+        filename: result.filename,
+        mimeType: file.type || 'application/octet-stream',
+        sizeBytes: file.size,
+        chunkCount: result.chunk_count,
+        stage: result.status === 'ready' ? 'indexed' : result.status,
+        uploadedAt: new Date().toLocaleDateString(),
+      };
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      throw new Error(err.message || 'Failed to upload document');
+    }
   }
 
   // Delete document (DELETE /api/documents/:id)
@@ -177,8 +202,9 @@ export class ApiClient {
     try {
       await this.request(`/api/documents/${id}`, { method: 'DELETE' });
       return true;
-    } catch {
-      return true;
+    } catch (err) {
+      console.error('Delete failed:', err);
+      throw err;
     }
   }
 
@@ -187,9 +213,9 @@ export class ApiClient {
     try {
       await this.request(`/api/documents/${id}/reindex`, { method: 'POST' });
       return true;
-    } catch {
-      await new Promise((r) => setTimeout(r, 600));
-      return true;
+    } catch (err) {
+      console.error('Reindex failed:', err);
+      throw err;
     }
   }
 
@@ -232,4 +258,16 @@ export class ApiClient {
       };
     }
   }
+
+  // Get system health (GET /api/health)
+  static async getHealth(): Promise<any> {
+    try {
+      return await this.request<any>('/api/health');
+    } catch (err) {
+      console.error('Failed to fetch system health:', err);
+      return { status: 'degraded' };
+    }
+  }
 }
+
+export const generateDynamicSuggestions = ApiClient.generateDynamicSuggestions;

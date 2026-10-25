@@ -1,6 +1,6 @@
-import { Router, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { listDocuments, ingestDocument, deleteDocument } from '../services/aiClient.js';
+import { listDocuments, ingestDocument, deleteDocument, getDocumentSuggestions } from '../services/aiClient.js';
 import { BadRequestError, UnsupportedFileTypeError, FileTooLargeError, NotFoundError } from '../schemas/errors.js';
 import { AxiosError } from 'axios';
 
@@ -11,6 +11,9 @@ const SUPPORTED_MIME_TYPES = [
   'text/markdown',
   'text/plain',
   'text/x-markdown',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/docx',
+  'application/msword',
 ];
 
 const MAX_FILE_SIZE_MB = 10;
@@ -20,9 +23,15 @@ function validateFile(file: Express.Multer.File) {
     throw new BadRequestError('No file provided');
   }
 
-  if (!SUPPORTED_MIME_TYPES.includes(file.mimetype)) {
+  const ext = (file.originalname || '').toLowerCase();
+  const isDocxExt = ext.endsWith('.docx');
+  const isMdExt = ext.endsWith('.md') || ext.endsWith('.markdown');
+  const isTxtExt = ext.endsWith('.txt');
+  const isPdfExt = ext.endsWith('.pdf');
+
+  if (!SUPPORTED_MIME_TYPES.includes(file.mimetype) && !isDocxExt && !isMdExt && !isTxtExt && !isPdfExt) {
     throw new UnsupportedFileTypeError(
-      `Unsupported file type: ${file.mimetype}. Supported types: PDF, Markdown, Text`
+      `Unsupported file type: ${file.mimetype}. Supported types: PDF, DOCX, Markdown, Text`
     );
   }
 
@@ -35,7 +44,7 @@ function validateFile(file: Express.Multer.File) {
 }
 
 // POST /api/documents - multipart upload
-router.post('/', async (req, res: Response) => {
+router.post('/', async (req, res: Response, next: NextFunction) => {
   try {
     const file = (req as any).file;
     validateFile(file);
@@ -52,40 +61,41 @@ router.post('/', async (req, res: Response) => {
     }
     res.status(201).json(responseBody);
   } catch (error) {
-    if (error instanceof BadRequestError || error instanceof UnsupportedFileTypeError || error instanceof FileTooLargeError) {
-      throw error;
-    }
-    throw error;
+    next(error);
   }
 });
 
 // GET /api/documents - list documents
-router.get('/', async (_req, res: Response) => {
-  const result = await listDocuments(_req.requestId);
-  res.json({
-    documents: result.documents.map((doc) => {
-      const docBody: Record<string, unknown> = {
-        document_id: doc.document_id,
-        filename: doc.filename,
-        mime_type: doc.mime_type,
-        content_hash: doc.content_hash,
-        uploaded_at: doc.uploaded_at,
-        status: doc.status,
-        chunk_count: doc.chunk_count,
-      };
-      if (doc.error_message) {
-        docBody.error_message = doc.error_message;
-      }
-      return docBody;
-    }),
-  });
+router.get('/', async (_req, res: Response, next: NextFunction) => {
+  try {
+    const result = await listDocuments(_req.requestId);
+    res.json({
+      documents: result.documents.map((doc) => {
+        const docBody: Record<string, unknown> = {
+          document_id: doc.document_id,
+          filename: doc.filename,
+          mime_type: doc.mime_type,
+          content_hash: doc.content_hash,
+          uploaded_at: doc.uploaded_at,
+          status: doc.status,
+          chunk_count: doc.chunk_count,
+        };
+        if (doc.error_message) {
+          docBody.error_message = doc.error_message;
+        }
+        return docBody;
+      }),
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // DELETE /api/documents/:documentId - delete document
-router.delete('/:documentId', async (req, res: Response) => {
+router.delete('/:documentId', async (req, res: Response, next: NextFunction) => {
   const documentId = req.params.documentId;
   if (!documentId) {
-    throw new BadRequestError('Document ID is required');
+    return next(new BadRequestError('Document ID is required'));
   }
 
   try {
@@ -93,9 +103,27 @@ router.delete('/:documentId', async (req, res: Response) => {
     res.status(204).send();
   } catch (error) {
     if (error instanceof AxiosError && error.response?.status === 404) {
-      throw new NotFoundError(`Document not found: ${documentId}`);
+      return next(new NotFoundError(`Document not found: ${documentId}`));
     }
-    throw error;
+    next(error);
+  }
+});
+
+// GET /api/documents/:documentId/suggestions - get dynamic suggestions for document
+router.get('/:documentId/suggestions', async (req, res: Response, next: NextFunction) => {
+  const documentId = req.params.documentId;
+  if (!documentId) {
+    return next(new BadRequestError('Document ID is required'));
+  }
+
+  try {
+    const data = await getDocumentSuggestions(documentId, req.requestId);
+    res.json(data);
+  } catch (error) {
+    if (error instanceof AxiosError && error.response?.status === 404) {
+      return next(new NotFoundError(`Document not found: ${documentId}`));
+    }
+    next(error);
   }
 });
 

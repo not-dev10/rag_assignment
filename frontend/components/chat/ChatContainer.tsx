@@ -2,23 +2,63 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, Citation } from '@/types/chat';
-import { initialChatMessages } from '@/lib/mockData';
-import { ApiClient } from '@/lib/api';
+import { DocumentItem } from '@/types/document';
+import { ApiClient, generateDynamicSuggestions } from '@/lib/api';
 import { MessageItem } from './MessageItem';
 import { PassageDrawer } from './PassageDrawer';
-import { Send, Trash2, Loader2, AlertCircle, Sparkles, Shield, Cpu } from 'lucide-react';
+import { Send, Trash2, Loader2, AlertCircle, Sparkles, Shield, Cpu, ArrowRight, FileText, X } from 'lucide-react';
 
 export const ChatContainer: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);  // Start with empty array
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isStrictGrounding, setIsStrictGrounding] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null);
   const [inspectMessage, setInspectMessage] = useState<ChatMessage | null>(null);
+  const [suggestions, setSuggestions] = useState<Array<{ label: string; query: string; category?: string }>>([]);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);  // Multiple document IDs
+  const [showDocSelector, setShowDocSelector] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load documents and dynamic suggestions
+  useEffect(() => {
+    ApiClient.getDocuments()
+      .then(async (docs) => {
+        setDocuments(docs);
+        
+        // Generate suggestions based on selected documents
+        const selectedDocs = selectedDocIds.length > 0 
+          ? docs.filter(d => selectedDocIds.includes(d.id))
+          : docs;
+        
+        const sugs = generateDynamicSuggestions(selectedDocs);
+        setSuggestions(sugs);
+      })
+      .catch(() => {});
+  }, [selectedDocIds]);
+
+  // Toggle document selection
+  const toggleDocumentSelection = (docId: string) => {
+    setSelectedDocIds(prev => 
+      prev.includes(docId) 
+        ? prev.filter(id => id !== docId)
+        : [...prev, docId]
+    );
+  };
+
+  // Select all documents
+  const selectAllDocuments = () => {
+    setSelectedDocIds(documents.map(d => d.id));
+  };
+
+  // Clear selection
+  const clearDocumentSelection = () => {
+    setSelectedDocIds([]);
+  };
 
   // Auto-scroll to bottom of conversation
   useEffect(() => {
@@ -33,9 +73,8 @@ export const ChatContainer: React.FC = () => {
     }
   }, [input]);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const query = input.trim();
+  const executeQuery = async (queryText: string) => {
+    const query = queryText.trim();
     if (!query || isLoading) return;
 
     setError(null);
@@ -55,7 +94,9 @@ export const ChatContainer: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const res = await ApiClient.askQuestion(query);
+      // Pass selected document IDs to backend for filtering
+      const docId = selectedDocIds.length === 1 ? selectedDocIds[0] : undefined;
+      const res = await ApiClient.askQuestion(query, docId);
 
       const assistantMessage: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
@@ -76,14 +117,15 @@ export const ChatContainer: React.FC = () => {
     }
   };
 
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    await executeQuery(input);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
-    }
-    // Shift+Enter inserts a newline
-    if (e.key === 'Shift' && e.shiftKey && !e.target?.disabled) {
-      // Allow shift key processing, textarea handles newline on its own
     }
   };
 
@@ -97,10 +139,16 @@ export const ChatContainer: React.FC = () => {
     }
   };
 
+  const selectedDocsLabel = selectedDocIds.length === 0 
+    ? `All Documents (${documents.length})`
+    : selectedDocIds.length === 1
+    ? documents.find(d => d.id === selectedDocIds[0])?.filename || '1 document'
+    : `${selectedDocIds.length} documents`;
+
   return (
     <div className="flex flex-col h-[calc(100vh-100px)]">
       {/* Top Header */}
-      <header className="flex items-center justify-between pb-4 mb-4 border-b border-border-subtle">
+      <header className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-border-subtle">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 glass-card px-3.5 py-1.5 rounded-full shadow-2xs border border-border-subtle">
             <span className="w-2 h-2 rounded-full bg-status-indexed-text" />
@@ -111,22 +159,20 @@ export const ChatContainer: React.FC = () => {
               Hybrid-v3
             </span>
           </div>
-          <div className="hidden lg:flex items-center gap-2 text-on-surface-variant text-xs font-mono">
-            <Cpu className="w-3.5 h-3.5 text-secondary" />
-            <span>Local Qdrant + text-embedding-3-large</span>
-            <span>•</span>
-            <span>k=4</span>
-            <span>•</span>
-            <span>Min Cosine: 0.75</span>
+
+          {/* Document Scope Selector */}
+          <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle">
+            <FileText className="w-3.5 h-3.5 text-secondary shrink-0" />
+            <span className="text-xs font-medium text-on-surface-variant">{selectedDocsLabel}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Health Indicator */}
-          <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle gap-2">
-            <span className="w-3.5 h-3.5 text-status-indexed-text" />
-            <span className="text-xs font-medium text-on-surface">API</span>
-            <span className="w-2 h-2 rounded-full bg-status-indexed-text" />
+          <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle">
+            <span className="w-2 h-2 rounded-full bg-status-indexed-text animate-pulse" />
+            <span className="text-xs font-medium text-on-surface">Free Tier</span>
+            <span className="text-[10px] text-on-surface-variant/70">~3-5s latency</span>
           </div>
 
           {/* Grounding Strictness Pill */}
@@ -144,21 +190,59 @@ export const ChatContainer: React.FC = () => {
             </label>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Messages Stream */}
       <div className="flex-1 overflow-y-auto pr-2 space-y-4">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-on-surface-variant">
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-on-surface-variant max-w-2xl mx-auto">
             <div className="w-12 h-12 rounded-2xl bg-accent-sky-bg text-secondary flex items-center justify-center mb-3 shadow-2xs">
               <Sparkles className="w-6 h-6 text-accent-sky-text" />
             </div>
             <div className="text-base font-bold text-on-surface mb-1">
               Document Grounded Q&A
             </div>
-            <p className="text-xs text-on-surface-variant max-w-sm">
-              Type your question below. Answers will be retrieved directly from the indexed Qdrant vector store with clickable citations.
+            <p className="text-xs text-on-surface-variant max-w-sm mb-6">
+              Type your question below or click a dynamic suggestion extracted from your indexed documents.
             </p>
+
+            {/* Dynamic Suggestion Cards */}
+            {suggestions.length > 0 && (
+              <div className="w-full text-left">
+                <div className="flex items-center justify-between text-xs font-semibold text-on-surface-variant mb-2.5 px-1">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-secondary" />
+                    Suggested Questions
+                  </span>
+                  <span className="text-[10px] text-on-surface-variant/70 uppercase tracking-wider font-mono">
+                    Based on Knowledge Base
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {suggestions.slice(0, 6).map((sug, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => executeQuery(sug.query)}
+                      className="p-3.5 rounded-xl glass-card border border-border-subtle hover:border-secondary/60 hover:bg-surface-container-high transition-all group flex flex-col justify-between text-left shadow-2xs cursor-pointer"
+                    >
+                      <div className="text-xs font-semibold text-on-surface group-hover:text-secondary transition-colors mb-1">
+                        {sug.label}
+                      </div>
+                      <div className="text-[11px] text-on-surface-variant line-clamp-2 mb-2 leading-relaxed">
+                        {sug.query}
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[9px] uppercase tracking-wider font-medium text-accent-sky-text bg-accent-sky-bg px-2 py-0.5 rounded-full border border-accent-sky-border/40">
+                          {sug.category}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-on-surface-variant group-hover:text-secondary group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           messages.map((msg) => (
@@ -172,9 +256,34 @@ export const ChatContainer: React.FC = () => {
         )}
 
         {isLoading && (
-          <div className="flex items-center gap-3 p-4 rounded-2xl glass-card border border-border-subtle text-xs text-on-surface-variant max-w-md shadow-xs">
-            <Loader2 className="w-4 h-4 animate-spin text-secondary shrink-0" />
-            <span>Retrieving chunks from Qdrant vector space & verifying evidence...</span>
+          <div className="flex flex-col gap-3 p-5 rounded-2xl glass-card border border-border-subtle text-xs text-on-surface max-w-xl shadow-xs">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 animate-spin text-secondary shrink-0" />
+              <div className="flex-1">
+                <div className="font-semibold text-sm text-on-surface mb-1">Processing Your Query...</div>
+                <div className="text-on-surface-variant">This may take 3-5 seconds on free tier</div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-2 pt-2 border-t border-border-subtle">
+              <div className="flex items-center gap-2 text-on-surface-variant">
+                <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></div>
+                <span>Generating embeddings via OpenRouter API...</span>
+              </div>
+              <div className="flex items-center gap-2 text-on-surface-variant">
+                <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse animation-delay-200"></div>
+                <span>Searching Qdrant Cloud vector database...</span>
+              </div>
+              <div className="flex items-center gap-2 text-on-surface-variant">
+                <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse animation-delay-400"></div>
+                <span>Verifying evidence and generating response...</span>
+              </div>
+            </div>
+            
+            <div className="text-[10px] text-on-surface-variant/70 pt-2 border-t border-border-subtle flex items-center gap-1">
+              <Cpu className="w-3 h-3" />
+              <span>Free tier API latency • Cloud infrastructure</span>
+            </div>
           </div>
         )}
 
@@ -189,7 +298,48 @@ export const ChatContainer: React.FC = () => {
       </div>
 
       {/* Glassmorphic Multiline Composer */}
-      <div className="pt-4 border-t border-border-subtle/80 bg-canvas-bg/80 backdrop-blur-xs">
+      <div className="pt-3 border-t border-border-subtle/80 bg-canvas-bg/80 backdrop-blur-xs">
+        {/* Scoped Document Badge */}
+        {selectedDocIds.length > 0 && selectedDocIds.length < documents.length && (
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary/15 border border-secondary/40 text-xs text-secondary font-medium shadow-2xs">
+              <FileText className="w-3.5 h-3.5 text-secondary" />
+              <span>Scope: <strong>{selectedDocsLabel}</strong></span>
+              <button
+                type="button"
+                onClick={clearDocumentSelection}
+                className="hover:bg-secondary/20 rounded-full p-0.5 text-secondary transition-all cursor-pointer ml-1"
+                title="Reset to All Documents"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          </div>
+        )}
+
+        {/* Dynamic Quick Suggestions Bar */}
+        {suggestions.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-1.5 scrollbar-none">
+            <span className="text-[10px] font-semibold text-on-surface-variant shrink-0 flex items-center gap-1 pl-1">
+              <Sparkles className="w-3 h-3 text-secondary animate-pulse" /> Suggestions:
+            </span>
+            {suggestions.map((sug, idx) => (
+              <button
+                key={idx}
+                type="button"
+                disabled={isLoading}
+                onClick={() => executeQuery(sug.query)}
+                className="px-2.5 py-1 rounded-full text-xs font-medium glass-card border border-border-subtle hover:border-secondary hover:text-secondary hover:bg-surface-container-high text-on-surface transition-all shrink-0 cursor-pointer shadow-2xs flex items-center gap-1.5"
+              >
+                <span>{sug.label}</span>
+                <span className="text-[9px] font-mono opacity-70 text-accent-sky-text bg-accent-sky-bg px-1.5 py-0.2 rounded">
+                  {sug.category}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
         <form
           onSubmit={handleSubmit}
           className="relative glass-panel rounded-2xl p-3 border border-border-subtle focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 shadow-sm transition-all"

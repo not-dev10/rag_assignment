@@ -4,16 +4,16 @@ import { EvalTestCase } from '@/types/eval';
 import { RAGSettings } from '@/types/settings';
 
 export const defaultSettings: RAGSettings = {
-  llmProvider: 'anthropic',
-  llmModel: 'claude-3-5-sonnet-20241022',
-  embeddingModel: 'text-embedding-3-large',
-  qdrantUrl: 'http://localhost:6333',
+  llmProvider: 'openai',
+  llmModel: 'openai/gpt-4o-mini',
+  embeddingModel: 'text-embedding-3-small',
+  qdrantUrl: './data/qdrant_db',
   qdrantCollection: 'knowledge_chunks',
   qdrantApiKey: '',
   topK: 4,
-  similarityThreshold: 0.75,
-  chunkTokens: 512,
-  chunkOverlap: 50,
+  similarityThreshold: 0.3,
+  chunkTokens: 800,
+  chunkOverlap: 120,
 };
 
 export const sampleDocuments: DocumentItem[] = [

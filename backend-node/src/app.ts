@@ -18,6 +18,9 @@ const allowedTypes = [
   'text/markdown',
   'text/plain',
   'text/x-markdown',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/docx',
+  'application/msword',
 ];
 
 const upload = multer({
@@ -25,7 +28,13 @@ const upload = multer({
     fileSize: config.MAX_UPLOAD_MB * 1024 * 1024,
   },
   fileFilter: (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
-    if (allowedTypes.includes(file.mimetype)) {
+    const ext = (file.originalname || '').toLowerCase();
+    const isDocxExt = ext.endsWith('.docx');
+    const isMdExt = ext.endsWith('.md') || ext.endsWith('.markdown');
+    const isTxtExt = ext.endsWith('.txt');
+    const isPdfExt = ext.endsWith('.pdf');
+
+    if (allowedTypes.includes(file.mimetype) || isDocxExt || isMdExt || isTxtExt || isPdfExt) {
       cb(null, true);
     } else {
       cb(new Error(`Unsupported file type: ${file.mimetype}`));
