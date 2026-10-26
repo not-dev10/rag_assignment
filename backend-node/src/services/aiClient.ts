@@ -162,12 +162,17 @@ export async function deleteDocument(documentId: string, requestId: string): Pro
 export async function askQuestion(
   question: string,
   requestId: string,
-  documentId?: string
+  documentId?: string,
+  conversationHistory?: Array<{question: string; answer: string}>
 ): Promise<AskResponse> {
   const axiosClient = getAIClient();
   const response = await axiosClient.post<AskResponse>(
     '/ask',
-    { question, document_id: documentId },
+    { 
+      question, 
+      document_id: documentId,
+      conversation_history: conversationHistory || []
+    },
     { headers: { 'X-Request-ID': requestId } }
   );
   return response.data;

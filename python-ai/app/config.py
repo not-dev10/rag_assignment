@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = Field(default='./data/uploads')
 
     # Retrieval
-    TOP_K: int = Field(default=4)
+    TOP_K: int = Field(default=10)  # Increased from 4 to 10 for better context coverage
     SIMILARITY_THRESHOLD: Optional[float] = Field(default=None)
 
     # Chunking

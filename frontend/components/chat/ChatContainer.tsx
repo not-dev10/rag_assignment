@@ -94,9 +94,21 @@ export const ChatContainer: React.FC = () => {
     setIsLoading(true);
 
     try {
+      // Build conversation history from recent messages (last 3 Q&A pairs)
+      const conversationHistory = [];
+      for (let i = 0; i < messages.length - 1; i++) {
+        if (messages[i].role === 'user' && messages[i + 1]?.role === 'assistant') {
+          conversationHistory.push({
+            question: messages[i].content,
+            answer: messages[i + 1].content
+          });
+        }
+      }
+      const recentHistory = conversationHistory.slice(-3);
+
       // Pass selected document IDs to backend for filtering
       const docId = selectedDocIds.length === 1 ? selectedDocIds[0] : undefined;
-      const res = await ApiClient.askQuestion(query, docId);
+      const res = await ApiClient.askQuestion(query, docId, recentHistory);
 
       const assistantMessage: ChatMessage = {
         id: `msg-${Date.now() + 1}`,

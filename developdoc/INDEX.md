@@ -11,6 +11,7 @@ This directory contains historical audit logs, architecture reports, integration
 | **[EMBEDDINGS_FIXED.md](./EMBEDDINGS_FIXED.md)** | Implementation details for replacing mock hash vectors with genuine OpenRouter embeddings. |
 | **[OPENROUTER_FIXED.md](./OPENROUTER_FIXED.md)** | Integration notes for OpenRouter LLM generation (`gpt-4o-mini`) and streaming/error handling. |
 | **[FINAL_AUDIT_COMPLETE.md](./FINAL_AUDIT_COMPLETE.md)** | Comprehensive audit covering security, error handling, strict grounding, and compliance with requirements. |
+| **[audit_copilot.md](./audit_copilot.md)** | Static comparison of the supplied RAG requirements against the current implementation, with prioritized faults and remediation order. |
 | **[FINAL_TESTING_GUIDE.md](./FINAL_TESTING_GUIDE.md)** | Step-by-step instructions for verifying all features, endpoints, and edge cases. |
 | **[FINAL_TEST_SUMMARY.md](./FINAL_TEST_SUMMARY.md)** | Summary of test passes across Python AI test suites, Vitest Node tests, and Next.js frontend builds. |
 | **[TESTING_RESULTS.md](./TESTING_RESULTS.md)** | Detailed test logs and execution outputs. |

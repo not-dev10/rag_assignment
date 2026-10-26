@@ -330,9 +330,10 @@ def get_llm_provider() -> LLMProvider:
 async def generate_answer(
     question: str,
     retrieved_chunks: List[dict],
+    conversation_history: Optional[List[dict]] = None,
 ) -> tuple[str, AskStatus, List[Source], str]:
     """
-    Generate an answer from retrieved chunks.
+    Generate an answer from retrieved chunks with optional conversation history.
     Returns (answer, status, sources, raw_context).
     """
     if not retrieved_chunks:
@@ -370,29 +371,39 @@ async def generate_answer(
         )
 
     context = '\n\n'.join(context_parts)
+    
+    # Add conversation history if provided
+    full_context = context
+    if conversation_history and len(conversation_history) > 0:
+        # Include last 3 turns for context
+        history_text = "\n\n".join([
+            f"Previous Q: {turn.get('question', '')}\nPrevious A: {turn.get('answer', '')}"
+            for turn in conversation_history[-3:]
+        ])
+        full_context = f"=== Recent Conversation ===\n{history_text}\n\n=== Retrieved Documents ===\n{context}"
 
     # Build prompt
     prompt = f"""{GROUNDING_INSTRUCTION}
 
 Context:
-{context}
+{full_context}
 
-Question: {question}
+Current Question: {question}
 
 Answer:"""
 
     try:
-        answer = await llm_provider.generate(prompt, context, question)
+        answer = await llm_provider.generate(prompt, full_context, question)
 
         # Only trigger fallback if the answer is explicitly the fallback message or empty
         if (
             answer.strip() == FALLBACK_MESSAGE.strip()
             or not answer.strip()
         ):
-            return FALLBACK_MESSAGE, AskStatus.FALLBACK, [], context
+            return FALLBACK_MESSAGE, AskStatus.FALLBACK, [], full_context
 
         # Otherwise, return the answer with sources and context
-        return answer, AskStatus.ANSWERED, sources, context
+        return answer, AskStatus.ANSWERED, sources, full_context
 
     except Exception as e:
         raise GenerationError(f'LLM generation failed: {e}')

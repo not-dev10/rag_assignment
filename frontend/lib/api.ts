@@ -40,7 +40,12 @@ export class ApiClient {
   }
 
   // Ask question (POST /api/ask)
-  static async askQuestion(question: string, documentId?: string, signal?: AbortSignal): Promise<AskResponse> {
+  static async askQuestion(
+    question: string, 
+    documentId?: string,
+    conversationHistory?: Array<{question: string; answer: string}>,
+    signal?: AbortSignal
+  ): Promise<AskResponse> {
     const trimmed = question.trim();
     if (!trimmed) {
       throw new Error('Question cannot be empty or whitespace.');
@@ -52,6 +57,7 @@ export class ApiClient {
         body: JSON.stringify({
           question: trimmed,
           document_id: documentId && documentId !== 'all' ? documentId : undefined,
+          conversation_history: conversationHistory || [],
         }),
         signal,
       });

@@ -43,6 +43,7 @@ class HealthResponse(BaseModel):
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
     document_id: Optional[str] = None
+    conversation_history: Optional[List[dict]] = Field(default=None)  # NEW: conversation context
 
 
 class Source(BaseModel):

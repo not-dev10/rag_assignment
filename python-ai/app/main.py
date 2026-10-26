@@ -417,7 +417,11 @@ async def delete_document(document_id: str):
 async def ask_question(body: AskRequest):
     try:
         retrieved = await retrieve_chunks(body.question, document_id=body.document_id)
-        answer, status, sources, context = await generate_answer(body.question, retrieved)
+        answer, status, sources, context = await generate_answer(
+            body.question, 
+            retrieved,
+            conversation_history=body.conversation_history  # Pass conversation history
+        )
         return AskResponse(
             answer=answer,
             status=status,
