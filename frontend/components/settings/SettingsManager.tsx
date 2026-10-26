@@ -18,8 +18,8 @@ export const SettingsManager: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <div className="flex items-center gap-2.5">
-          <h2 className="text-xl font-bold text-on-surface tracking-tight">System Configuration</h2>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h2 className="text-lg sm:text-xl font-bold text-on-surface tracking-tight">System Configuration</h2>
           <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text border border-accent-sky-border">
             RAG Orchestrator
           </span>
@@ -31,7 +31,7 @@ export const SettingsManager: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* LLM & Embeddings Card */}
-        <div className="glass-panel rounded-2xl p-6 border border-border-subtle shadow-sm space-y-4">
+        <div className="glass-panel rounded-2xl p-4 sm:p-6 border border-border-subtle shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-3 border-b border-border-subtle text-xs font-bold text-on-surface">
             <Cpu className="w-4 h-4 text-secondary" />
             <span>Language &amp; Embedding Model Providers</span>
@@ -78,7 +78,7 @@ export const SettingsManager: React.FC = () => {
         </div>
 
         {/* Qdrant Vector Store Card */}
-        <div className="glass-panel rounded-2xl p-6 border border-border-subtle shadow-sm space-y-4">
+        <div className="glass-panel rounded-2xl p-4 sm:p-6 border border-border-subtle shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-3 border-b border-border-subtle text-xs font-bold text-on-surface">
             <Database className="w-4 h-4 text-secondary" />
             <span>Qdrant Vector Database Connection</span>
@@ -121,7 +121,7 @@ export const SettingsManager: React.FC = () => {
         </div>
 
         {/* Retrieval Parameters Card */}
-        <div className="glass-panel rounded-2xl p-6 border border-border-subtle shadow-sm space-y-4">
+        <div className="glass-panel rounded-2xl p-4 sm:p-6 border border-border-subtle shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-3 border-b border-border-subtle text-xs font-bold text-on-surface">
             <Sliders className="w-4 h-4 text-secondary" />
             <span>Vector Retrieval &amp; Chunking Hyperparameters</span>

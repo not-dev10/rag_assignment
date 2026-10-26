@@ -146,7 +146,7 @@ export const DocumentsManager: React.FC = () => {
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Knowledge-base status */}
           <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle gap-2">
             <span className="w-2 h-2 rounded-full bg-status-indexed-text" />
@@ -156,7 +156,7 @@ export const DocumentsManager: React.FC = () => {
           </div>
 
           {/* Upload button */}
-          <div className="flex items-center gap-3">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-on-surface-variant" />
               <input
@@ -164,7 +164,7 @@ export const DocumentsManager: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search documents..."
-                className="h-9 pl-9 pr-4 text-xs glass-card rounded-full text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary w-56 transition-all"
+                className="h-9 w-full pl-9 pr-4 text-xs glass-card rounded-full text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary sm:w-56 transition-all"
               />
             </div>
 
@@ -172,7 +172,7 @@ export const DocumentsManager: React.FC = () => {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="h-9 px-4 rounded-full bg-primary hover:bg-neutral-800 text-on-primary text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+              className="h-9 flex-1 px-4 rounded-full bg-primary hover:bg-neutral-800 text-on-primary text-xs font-semibold inline-flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer sm:flex-none"
             >
               <Upload className="w-4 h-4 text-accent-sky-border" />
               <span>Upload File</span>
@@ -197,12 +197,12 @@ export const DocumentsManager: React.FC = () => {
           e.preventDefault();
           handleFileUpload(e.dataTransfer.files);
         }}
-        className="relative overflow-hidden glass-panel rounded-2xl p-8 border border-border-subtle shadow-sm hover:border-secondary/60 transition-all cursor-pointer group"
+        className="relative overflow-hidden glass-panel rounded-2xl p-4 sm:p-8 border border-border-subtle shadow-sm hover:border-secondary/60 transition-all cursor-pointer group"
       >
         {/* Subtle radial ambient glow */}
         <div className="absolute -right-16 -top-16 w-64 h-64 bg-accent-sky-bg rounded-full blur-3xl opacity-60 pointer-events-none" />
 
-        <div className="border-2 border-dashed border-accent-sky-border rounded-xl p-8 flex flex-col items-center justify-center text-center bg-accent-sky-bg/30 hover:bg-accent-sky-bg/50 transition-all">
+        <div className="border-2 border-dashed border-accent-sky-border rounded-xl p-5 sm:p-8 flex flex-col items-center justify-center text-center bg-accent-sky-bg/30 hover:bg-accent-sky-bg/50 transition-all">
           <div className="w-14 h-14 rounded-full bg-accent-sky-bg flex items-center justify-center text-accent-sky-text shadow-xs mb-3 group-hover:scale-105 transition-transform">
             <Upload className="w-6 h-6" />
           </div>

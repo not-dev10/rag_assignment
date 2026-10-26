@@ -89,8 +89,8 @@ export const EvaluationRunner: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-xl font-bold text-on-surface tracking-tight">RAG Evaluation Suite</h2>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h2 className="text-lg sm:text-xl font-bold text-on-surface tracking-tight">RAG Evaluation Suite</h2>
             <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text border border-accent-sky-border">
               Automated Harness
             </span>
@@ -100,7 +100,7 @@ export const EvaluationRunner: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-2 text-xs font-mono glass-card px-3 py-1.5 rounded-full border border-border-subtle">
             <span className="text-status-indexed-text font-bold">{passedCount} Passed</span>
             <span className="text-outline-variant font-mono">•</span>
@@ -133,7 +133,7 @@ export const EvaluationRunner: React.FC = () => {
 
             return (
               <div key={test.id} className="p-5 hover:bg-surface-container-low/20 transition-colors flex flex-col gap-3.5">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-start sm:gap-4">
                   <div className="flex items-start gap-3">
                     <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-surface-container-low text-secondary font-bold border border-border-subtle shrink-0">
                       {test.scenarioId}
@@ -146,7 +146,7 @@ export const EvaluationRunner: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="flex items-center justify-between gap-2.5 sm:justify-end shrink-0">
                     {/* Status Badge */}
                     {isPassed && (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-status-indexed-bg text-status-indexed-text border border-status-indexed-text/20 shadow-2xs">

@@ -18,11 +18,11 @@ export const Header: React.FC = () => {
   const currentTitle = titleMap[pathname] || 'AI Document Chat';
 
   return (
-    <header className="fixed top-0 left-72 right-0 h-16 glass-panel z-40 border-b border-border-subtle">
-      <div className="w-full h-full px-8 flex items-center justify-between gap-6">
+    <header className="fixed top-0 left-0 lg:left-72 right-0 h-16 glass-panel z-40 border-b border-border-subtle">
+      <div className="w-full h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3">
         {/* Title & Collection Context */}
         <div className="flex items-center gap-3">
-          <h1 className="text-sm font-bold text-on-surface tracking-tight">{currentTitle}</h1>
+          <h1 className="max-w-[52vw] truncate text-sm font-bold text-on-surface tracking-tight">{currentTitle}</h1>
           <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-status-indexed-bg text-status-indexed-text text-xs font-mono font-medium border border-status-indexed-text/20">
             <span className="w-1.5 h-1.5 rounded-full bg-status-indexed-text animate-pulse" />
             Grounding Verified
@@ -58,13 +58,13 @@ export const Header: React.FC = () => {
 
           {/* User & Cluster Status */}
           <div className="flex items-center gap-3 pl-1">
-            <div className="flex flex-col items-end">
+            <div className="hidden sm:flex flex-col items-end">
               <span className="text-xs text-on-surface font-semibold">Dr. Aris</span>
               <span className="text-[10px] text-accent-sky-text bg-accent-sky-bg px-2 py-0.5 rounded-full border border-accent-sky-border font-mono font-semibold">
                 Cluster-US-East
               </span>
             </div>
-            <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-xs ring-2 ring-accent-sky-border shadow-xs">
+            <div className="w-8 h-8 shrink-0 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-xs ring-2 ring-accent-sky-border shadow-xs">
               DA
             </div>
           </div>

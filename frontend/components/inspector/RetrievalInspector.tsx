@@ -37,8 +37,8 @@ export const RetrievalInspector: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-2.5">
-          <h2 className="text-xl font-bold text-on-surface tracking-tight">Retrieval &amp; Context Inspector</h2>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h2 className="text-lg sm:text-xl font-bold text-on-surface tracking-tight">Retrieval &amp; Context Inspector</h2>
           <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-accent-sky-bg text-accent-sky-text border border-accent-sky-border">
             Vector Space Debugger
           </span>
@@ -49,7 +49,7 @@ export const RetrievalInspector: React.FC = () => {
       </div>
 
       {/* Query Bar */}
-      <form onSubmit={handleInspect} className="flex gap-3">
+      <form onSubmit={handleInspect} className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-4 top-3 text-on-surface-variant" />
           <input
@@ -63,7 +63,7 @@ export const RetrievalInspector: React.FC = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="h-10 px-5 rounded-xl bg-primary hover:bg-neutral-800 text-on-primary text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-xs cursor-pointer shrink-0"
+          className="h-10 w-full px-5 rounded-xl bg-primary hover:bg-neutral-800 text-on-primary text-xs font-semibold inline-flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer sm:w-auto sm:shrink-0"
         >
           <FileSearch className="w-4 h-4 text-accent-sky-border" />
           <span>{isLoading ? 'Retrieving Chunks...' : 'Inspect Retrieval'}</span>
@@ -72,7 +72,7 @@ export const RetrievalInspector: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Left Column: Retrieved Chunks */}
-        <div className="glass-panel rounded-2xl shadow-sm border border-border-subtle p-5 flex flex-col gap-3">
+        <div className="glass-panel rounded-2xl shadow-sm border border-border-subtle p-4 sm:p-5 flex flex-col gap-3">
           <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
             <span className="text-xs font-bold text-on-surface flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-secondary" />
@@ -132,7 +132,7 @@ export const RetrievalInspector: React.FC = () => {
         </div>
 
         {/* Right Column: Exact Context Passed to LLM */}
-        <div className="glass-panel rounded-2xl shadow-sm border border-border-subtle p-5 flex flex-col gap-3">
+        <div className="glass-panel rounded-2xl shadow-sm border border-border-subtle p-4 sm:p-5 flex flex-col gap-3">
           <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
             <div className="flex items-center gap-2 text-xs font-bold text-on-surface">
               <Terminal className="w-4 h-4 text-secondary" />

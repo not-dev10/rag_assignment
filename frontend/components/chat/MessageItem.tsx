@@ -45,14 +45,14 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       </div>
 
       <div
-        className={`flex-1 glass-card rounded-2xl rounded-tl-xs p-5 shadow-xs border transition-all ${
+        className={`min-w-0 flex-1 glass-card rounded-2xl rounded-tl-xs p-4 sm:p-5 shadow-xs border transition-all ${
           message.isFallback
             ? 'border-amber-200 bg-amber-50/50'
             : 'border-border-subtle hover:border-border-strong/70'
         }`}
       >
         {/* Verification Status Header */}
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-border-subtle/80">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-border-subtle/80">
           <div className="flex items-center gap-2">
             {message.isFallback ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-status-indexing-bg text-status-indexing-text text-xs font-semibold border border-status-indexing-text/20">
@@ -67,7 +67,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-[11px] text-on-surface-variant font-mono">
+          <div className="flex items-center gap-2 text-[11px] text-on-surface-variant font-mono shrink-0">
             {message.latencyMs && <span>{message.latencyMs}ms</span>}
             <span>•</span>
             <span>{message.timestamp}</span>
@@ -99,7 +99,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         )}
 
         {/* Action bar */}
-        <div className="mt-4 pt-3 border-t border-border-subtle/60 flex items-center justify-between text-xs text-on-surface-variant">
+        <div className="mt-4 pt-3 border-t border-border-subtle/60 flex flex-wrap items-center justify-between gap-2 text-xs text-on-surface-variant">
           <div className="flex items-center gap-2">
             <button
               type="button"

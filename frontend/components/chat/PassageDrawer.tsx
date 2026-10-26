@@ -13,7 +13,7 @@ export const PassageDrawer: React.FC<PassageDrawerProps> = ({ citation, onClose 
   if (!citation) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[420px] glass-panel shadow-2xl z-50 flex flex-col p-6 border-l border-border-subtle animate-in slide-in-from-right duration-200">
+    <div className="fixed inset-y-0 right-0 w-full max-w-[420px] glass-panel shadow-2xl z-50 flex flex-col p-4 sm:p-6 border-l border-border-subtle animate-in slide-in-from-right duration-200">
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-border-subtle">
         <div className="flex items-center gap-2.5">

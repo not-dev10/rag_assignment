@@ -164,10 +164,10 @@ export const ChatContainer: React.FC = () => {
     : `${selectedDocIds.length} documents`;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)]">
+    <div className="flex min-h-[calc(100vh-9rem)] flex-col lg:h-[calc(100vh-100px)]">
       {/* Top Header */}
       <header className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-border-subtle">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 glass-card px-3.5 py-1.5 rounded-full shadow-2xs border border-border-subtle">
             <span className="w-2 h-2 rounded-full bg-status-indexed-text" />
             <span className="text-xs font-semibold text-on-surface">
@@ -229,7 +229,7 @@ export const ChatContainer: React.FC = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Health Indicator */}
           <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle">
             <span className="w-2 h-2 rounded-full bg-status-indexed-text animate-pulse" />
@@ -255,7 +255,7 @@ export const ChatContainer: React.FC = () => {
       </header>
 
       {/* Messages Stream */}
-      <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+      <div className="min-h-0 flex-1 overflow-y-auto pr-0 sm:pr-2 space-y-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-8 text-on-surface-variant max-w-2xl mx-auto">
             <div className="w-12 h-12 rounded-2xl bg-accent-sky-bg text-secondary flex items-center justify-center mb-3 shadow-2xs">
@@ -404,7 +404,7 @@ export const ChatContainer: React.FC = () => {
 
         <form
           onSubmit={handleSubmit}
-          className="relative glass-panel rounded-2xl p-3 border border-border-subtle focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 shadow-sm transition-all"
+          className="relative glass-panel rounded-2xl p-2.5 sm:p-3 border border-border-subtle focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 shadow-sm transition-all"
         >
           <textarea
             ref={textareaRef}
@@ -414,7 +414,7 @@ export const ChatContainer: React.FC = () => {
             disabled={isLoading}
             placeholder="Ask questions grounded in indexed documents... (Enter to send, Shift+Enter for newline)"
             rows={2}
-            className="w-full resize-none bg-transparent p-1 pr-28 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none leading-relaxed"
+            className="w-full resize-none bg-transparent p-1 pr-2 sm:pr-28 text-sm text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none leading-relaxed"
           />
 
           <div className="flex items-center justify-between pt-2 border-t border-border-subtle/60 mt-1">
@@ -422,7 +422,7 @@ export const ChatContainer: React.FC = () => {
               Grounding: Strict Verification Active
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <span className="text-[10px] text-on-surface-variant/60 hidden sm:inline font-mono">
                 ↵ Enter
               </span>

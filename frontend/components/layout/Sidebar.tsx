@@ -35,7 +35,8 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="fixed left-4 top-4 bottom-4 w-64 glass-panel rounded-2xl shadow-[0_4px_24px_-4px_rgba(16,24,40,0.06),0_1px_2px_-1px_rgba(16,24,40,0.03)] z-50 flex flex-col p-4 border border-border-subtle">
+    <>
+      <aside className="hidden lg:flex fixed left-4 top-4 bottom-4 w-64 glass-panel rounded-2xl shadow-[0_4px_24px_-4px_rgba(16,24,40,0.06),0_1px_2px_-1px_rgba(16,24,40,0.03)] z-50 flex-col p-4 border border-border-subtle">
       {/* Brand Header */}
       <div className="flex items-center gap-3 px-3 py-2 mb-6">
         <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-xs">
@@ -91,6 +92,26 @@ export const Sidebar: React.FC = () => {
           42ms
         </span>
       </div>
-    </aside>
+      </aside>
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 flex items-center justify-around gap-1 border-t border-border-subtle bg-white/95 px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-md">
+      {navItems.map((item) => {
+        const active = isActive(item.href);
+        const Icon = item.icon;
+        return (
+          <Link
+            key={item.name}
+            href={item.href}
+            aria-label={item.name}
+            className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-medium ${
+              active ? 'bg-primary text-on-primary' : 'text-on-surface-variant'
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            <span className="max-w-full truncate">{item.name === 'Retrieval Inspector' ? 'Inspector' : item.name}</span>
+          </Link>
+        );
+      })}
+      </nav>
+    </>
   );
 };
