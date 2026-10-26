@@ -163,7 +163,8 @@ export async function askQuestion(
   question: string,
   requestId: string,
   documentId?: string,
-  conversationHistory?: Array<{question: string; answer: string}>
+  conversationHistory?: Array<{question: string; answer: string}>,
+  documentIds?: string[],
 ): Promise<AskResponse> {
   const axiosClient = getAIClient();
   const response = await axiosClient.post<AskResponse>(
@@ -171,7 +172,8 @@ export async function askQuestion(
     { 
       question, 
       document_id: documentId,
-      conversation_history: conversationHistory || []
+      conversation_history: conversationHistory || [],
+      document_ids: documentIds,
     },
     { headers: { 'X-Request-ID': requestId } }
   );

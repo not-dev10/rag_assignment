@@ -407,7 +407,11 @@ async def delete_document(document_id: str):
 @app.post('/ask', response_model=AskResponse)
 async def ask_question(body: AskRequest):
     try:
-        retrieved = await retrieve_chunks(body.question, document_id=body.document_id)
+        retrieved = await retrieve_chunks(
+            body.question,
+            document_id=body.document_id,
+            document_ids=body.document_ids,
+        )
         answer, status, sources, context = await generate_answer(
             body.question, 
             retrieved,

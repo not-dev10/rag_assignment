@@ -6,7 +6,7 @@ import { DocumentItem } from '@/types/document';
 import { ApiClient, generateDynamicSuggestions } from '@/lib/api';
 import { MessageItem } from './MessageItem';
 import { PassageDrawer } from './PassageDrawer';
-import { Send, Trash2, Loader2, AlertCircle, Sparkles, Shield, Cpu, ArrowRight, FileText, X } from 'lucide-react';
+import { Send, Trash2, Loader2, AlertCircle, Sparkles, Shield, Cpu, ArrowRight, FileText, X, ChevronDown, Check } from 'lucide-react';
 
 export const ChatContainer: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);  // Start with empty array
@@ -108,7 +108,13 @@ export const ChatContainer: React.FC = () => {
 
       // Pass selected document IDs to backend for filtering
       const docId = selectedDocIds.length === 1 ? selectedDocIds[0] : undefined;
-      const res = await ApiClient.askQuestion(query, docId, recentHistory);
+      const res = await ApiClient.askQuestion(
+        query,
+        docId,
+        recentHistory,
+        undefined,
+        selectedDocIds.length > 1 ? selectedDocIds : undefined,
+      );
 
       const assistantMessage: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
@@ -175,8 +181,52 @@ export const ChatContainer: React.FC = () => {
           {/* Document Scope Selector */}
           <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full shadow-2xs border border-border-subtle">
             <FileText className="w-3.5 h-3.5 text-secondary shrink-0" />
-            <span className="text-xs font-medium text-on-surface-variant">{selectedDocsLabel}</span>
+            <button
+              type="button"
+              onClick={() => setShowDocSelector((visible) => !visible)}
+              className="flex items-center gap-1 text-xs font-medium text-on-surface-variant hover:text-secondary"
+              aria-expanded={showDocSelector}
+              aria-label="Select documents for chatbot search"
+            >
+              <span>{selectedDocsLabel}</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
           </div>
+
+          {showDocSelector && (
+            <div className="absolute z-20 top-14 left-4 w-80 max-w-[calc(100vw-2rem)] glass-panel rounded-xl border border-border-subtle p-3 shadow-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-on-surface">Search documents</span>
+                <div className="flex gap-2 text-[10px]">
+                  <button type="button" onClick={selectAllDocuments} className="text-secondary hover:underline">All</button>
+                  <button type="button" onClick={clearDocumentSelection} className="text-on-surface-variant hover:underline">Clear</button>
+                </div>
+              </div>
+              <p className="text-[10px] text-on-surface-variant mb-2">
+                Choose one or more documents. Only selected documents will be sent through retrieval.
+              </p>
+              <div className="max-h-56 overflow-y-auto space-y-1">
+                {documents.length === 0 ? (
+                  <p className="text-xs text-on-surface-variant py-2">No indexed documents available.</p>
+                ) : documents.map((document) => {
+                  const selected = selectedDocIds.includes(document.id);
+                  return (
+                    <button
+                      key={document.id}
+                      type="button"
+                      onClick={() => toggleDocumentSelection(document.id)}
+                      className="w-full flex items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-surface-container-high"
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center ${selected ? 'bg-secondary border-secondary' : 'border-border-subtle'}`}>
+                        {selected && <Check className="w-3 h-3 text-white" />}
+                      </span>
+                      <span className="text-xs text-on-surface truncate">{document.filename}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-3">

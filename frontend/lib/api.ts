@@ -44,7 +44,8 @@ export class ApiClient {
     question: string, 
     documentId?: string,
     conversationHistory?: Array<{question: string; answer: string}>,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    documentIds?: string[]
   ): Promise<AskResponse> {
     const trimmed = question.trim();
     if (!trimmed) {
@@ -57,6 +58,7 @@ export class ApiClient {
         body: JSON.stringify({
           question: trimmed,
           document_id: documentId && documentId !== 'all' ? documentId : undefined,
+          document_ids: documentIds?.length ? documentIds : undefined,
           conversation_history: conversationHistory || [],
         }),
         signal,

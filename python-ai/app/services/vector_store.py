@@ -299,6 +299,7 @@ class VectorStore:
         query_vector: List[float],
         top_k: int = None,
         document_id: Optional[str] = None,
+        document_ids: Optional[List[str]] = None,
     ) -> List[dict]:
         """Search for similar chunks. Returns list of scored points with payload."""
         if self.client is None:
@@ -308,13 +309,15 @@ class VectorStore:
             top_k = settings.TOP_K
 
         query_filter = None
-        if document_id:
+        selected_ids = document_ids or ([document_id] if document_id else [])
+        if selected_ids:
             query_filter = Filter(
-                must=[
+                should=[
                     FieldCondition(
                         key='document_id',
-                        match=MatchValue(value=document_id),
+                        match=MatchValue(value=selected_id),
                     )
+                    for selected_id in selected_ids
                 ]
             )
 

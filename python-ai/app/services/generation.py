@@ -350,7 +350,6 @@ async def generate_answer(
         remaining = settings.MAX_CONTEXT_CHARS - context_chars
         if remaining <= 0:
             break
-        chunk_text = chunk_text[:remaining]
         seen_text.add(chunk_text)
 
         # Create source citation
@@ -370,10 +369,16 @@ async def generate_answer(
         if source.section_title:
             source_info += f" · {source.section_title}"
 
-        context_parts.append(
-            f"[Chunk {len(sources)}] {source_info}\n{chunk_text}"
-        )
-        context_chars += len(chunk_text)
+        entry_prefix = f"[Chunk {len(sources)}] {source_info}\n"
+        separator_length = 2 if context_parts else 0
+        available_text = remaining - len(entry_prefix) - separator_length
+        if available_text <= 0:
+            sources.pop()
+            break
+        chunk_text = chunk_text[:available_text]
+        sources[-1].excerpt = chunk_text[:300]
+        context_parts.append(f"{entry_prefix}{chunk_text}")
+        context_chars += separator_length + len(entry_prefix) + len(chunk_text)
 
     context = '\n\n'.join(context_parts)
     
@@ -382,9 +387,11 @@ async def generate_answer(
     if conversation_history and len(conversation_history) > 0:
         # Include last 3 turns for context
         history_text = "\n\n".join([
-            f"Previous Q: {turn.get('question', '')}\nPrevious A: {turn.get('answer', '')}"
+            f"Previous Q: {str(turn.get('question', '')).strip()[:2000]}\n"
+            f"Previous A: {str(turn.get('answer', '')).strip()[:3000]}"
             for turn in conversation_history[-3:]
         ])
+        history_text = history_text[-settings.MAX_HISTORY_CHARS:]
         full_context = f"=== Recent Conversation ===\n{history_text}\n\n=== Retrieved Documents ===\n{context}"
 
     # Build prompt

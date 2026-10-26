@@ -12,6 +12,7 @@ async def retrieve_chunks(
     question: str,
     top_k: int = None,
     document_id: Optional[str] = None,
+    document_ids: Optional[List[str]] = None,
 ) -> List[dict]:
     """
     Retrieve relevant chunks for a question.
@@ -29,7 +30,12 @@ async def retrieve_chunks(
         raise RetrievalError(f'Failed to embed question: {e}')
 
     try:
-        results = vector_store.search(query_vector, top_k=top_k, document_id=document_id)
+        results = vector_store.search(
+            query_vector,
+            top_k=top_k,
+            document_id=document_id,
+            document_ids=document_ids,
+        )
     except Exception as e:
         raise RetrievalError(f'Vector search failed: {e}')
 

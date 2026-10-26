@@ -56,6 +56,20 @@ describe('DocuMind Node API Gateway', () => {
       const data = (await res.json()) as any;
       expect(data.error).toBeDefined();
     });
+
+    it('should reject more than 50 selected document IDs', async () => {
+      const res = await fetch(`${baseUrl}/api/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: 'What is in the documents?',
+          document_ids: Array.from({ length: 51 }, (_, index) => `doc-${index}`),
+        }),
+      });
+      expect(res.status).toBe(400);
+      const data = (await res.json()) as any;
+      expect(data.error).toBeDefined();
+    });
   });
 
   describe('Documents API', () => {

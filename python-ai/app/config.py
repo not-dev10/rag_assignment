@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     TOP_K: int = Field(default=5)
     SIMILARITY_THRESHOLD: Optional[float] = Field(default=None)
     MAX_CONTEXT_CHARS: int = Field(default=12000)
+    MAX_HISTORY_CHARS: int = Field(default=6000)
 
     # Chunking
     CHUNK_SIZE: int = Field(default=500)

@@ -142,7 +142,14 @@ The following high-impact items were addressed in the current working tree:
 - Configured OpenAI/OpenRouter embedding and generation failures now surface as
   errors rather than silently returning mock output.
 - Generated context is bounded and duplicate chunk text is removed before prompting.
-- Focused tests cover token-aware chunking, embedding batches, validation failures,
+- Chatbot requests can be scoped to one or more manually selected document IDs;
+  no selection continues to search all indexed documents.
+- Conversation history is limited to recent turns and a configured character
+  budget, while formatted retrieval context is bounded including citation
+  headers.
+- Focused tests cover answerable and unanswerable chatbot questions, citations,
+  duplicate-context removal, context bounds, history limits, selected-document
+  propagation, token-aware chunking, embedding batches, validation failures,
   and collision-free point IDs.
 
 Enterprise authentication, tenant isolation, durable job storage, and distributed
@@ -151,10 +158,13 @@ project scope.
 
 ### Validation performed
 
-- `pytest tests/test_chunking.py tests/test_embedding_validation.py -q`: **25 passed**
-- `ruff check app tests/test_chunking.py tests/test_embedding_validation.py`:
+- `pytest tests/test_chatbot.py tests/test_chunking.py tests/test_embedding_validation.py -q`:
+  **30 passed**
+- `ruff check app tests/test_chatbot.py tests/test_chunking.py tests/test_embedding_validation.py`:
   **passed**
 - Pylance syntax checks for the modified Python modules: **passed**
+- `npm test -- --run tests/api.test.ts` in `backend-node`: **5 passed**
+- `npm run build` in `frontend`: **passed**
 
 The existing `tests/test_rag_pipeline.py` suite was also executed. Three tests still
 depend on a clean/isolated Qdrant collection or character-count chunking assumptions;
