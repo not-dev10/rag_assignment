@@ -1,11 +1,10 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Request, Depends
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import ValidationError
 import uuid
-import os
-import shutil
 import hashlib
+import re
+import zipfile
 from pathlib import Path
 
 from app.config import settings
@@ -15,15 +14,12 @@ from app.schemas import (
     DocumentListResponse,
     AskRequest,
     AskResponse,
-    ErrorResponse,
     DocumentStatus,
 )
 from app.services.ingestion import process_document, IngestionError
 from app.services.vector_store import get_vector_store, VectorStoreError
-from app.services.retrieval import retrieve_chunks, RetrievalError
+from app.services.retrieval import retrieve_chunks
 from app.services.generation import generate_answer, GenerationError
-from app.schemas import Chunk
-from typing import List
 
 
 app = FastAPI(
@@ -141,7 +137,12 @@ async def ingest_document(file: UploadFile = File(...)):
         'application/docx',
         'application/msword',
     ]
-    filename_lower = (file.filename or '').lower()
+    original_filename = file.filename or ''
+    filename = Path(original_filename).name
+    filename = re.sub(r'[^A-Za-z0-9._ -]', '_', filename).strip()
+    filename_lower = filename.lower()
+    if not filename:
+        raise HTTPException(status_code=400, detail={'error': {'code': 'INVALID_FILENAME', 'message': 'Filename is required'}})
     is_valid_type = file.content_type in allowed_types or filename_lower.endswith(('.pdf', '.md', '.markdown', '.txt', '.docx'))
 
     if not is_valid_type:
@@ -182,39 +183,29 @@ async def ingest_document(file: UploadFile = File(...)):
             },
         )
 
+    suffix = Path(filename).suffix.lower()
+    if suffix == '.pdf' and not content.startswith(b'%PDF'):
+        raise HTTPException(status_code=400, detail={'error': {'code': 'INVALID_FILE_CONTENT', 'message': 'File is not a valid PDF'}})
+    if suffix == '.docx' and not zipfile.is_zipfile(__import__('io').BytesIO(content)):
+        raise HTTPException(status_code=400, detail={'error': {'code': 'INVALID_FILE_CONTENT', 'message': 'File is not a valid DOCX'}})
+
     # Compute content hash for duplicate detection
     content_hash = hashlib.sha256(content).hexdigest()
 
     # Check if this content already exists in Qdrant
     vector_store = get_vector_store()
-    try:
-        scroll_result = vector_store.client.scroll(
-            collection_name=settings.QDRANT_COLLECTION,
-            limit=100,
-            with_payload=True,
-            with_vectors=False,
+    existing_document = vector_store.find_document_by_content_hash(content_hash)
+    if existing_document:
+        return JSONResponse(
+            status_code=200,
+            content={
+                'document_id': existing_document['document_id'],
+                'filename': existing_document['filename'],
+                'status': 'ready',
+                'chunk_count': existing_document['chunk_count'],
+                'duplicate': True
+            },
         )
-        existing_points = [p for p in scroll_result[0] if p.payload and p.payload.get('content_hash') == content_hash]
-        if existing_points:
-            # Document already indexed - return existing document info
-            # Use the first existing point's document_id
-            existing_doc_id = existing_points[0].payload.get('document_id')
-            # Count total chunks for this document
-            doc_chunk_count = sum(1 for p in scroll_result[0] if p.payload and p.payload.get('document_id') == existing_doc_id)
-            # Return existing document status
-            return JSONResponse(
-                status_code=200,
-                content={
-                    'document_id': existing_doc_id,
-                    'filename': existing_points[0].payload.get('filename', file.filename),
-                    'status': 'ready',
-                    'chunk_count': doc_chunk_count,
-                    'duplicate': True
-                },
-            )
-    except Exception:
-        # If check fails, proceed with normal ingestion
-        pass
 
     # Generate document ID
     document_id = str(uuid.uuid4())
@@ -222,13 +213,13 @@ async def ingest_document(file: UploadFile = File(...)):
     # Save file temporarily in uploads directory
     upload_dir = Path(settings.UPLOAD_DIR)
     upload_dir.mkdir(parents=True, exist_ok=True)
-    temp_path = upload_dir / f'{document_id}_{file.filename}'
+    temp_path = upload_dir / f'{document_id}_{filename}'
 
     try:
         temp_path.write_bytes(content)
 
         # Process document: extract -> chunk
-        result = await process_document(temp_path, file.filename, file.content_type, document_id)
+        result = await process_document(temp_path, filename, file.content_type, document_id)
 
         if result['status'] == 'failed':
             # Clean up temp file on failure
@@ -430,11 +421,11 @@ async def ask_question(body: AskRequest):
         )
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=502,
             detail={
                 'error': {
-                    'code': 'RETRIEVAL_FAILED',
-                    'message': f'Failed to process question: {str(e)}',
+                    'code': 'MODEL_PROVIDER_ERROR' if isinstance(e, GenerationError) else 'RETRIEVAL_FAILED',
+                    'message': str(e),
                 }
             },
         )

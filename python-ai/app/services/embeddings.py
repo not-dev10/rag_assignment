@@ -1,7 +1,7 @@
-from typing import List, Optional
 import hashlib
 import random
 import logging
+import asyncio
 
 from app.config import settings
 
@@ -76,24 +76,22 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
             self._dimension = 1536
 
     async def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        mock_provider = MockEmbeddingProvider()
-        # Check if key is actually valid (not empty, not a placeholder)
         if not self.openai_api_key or len(self.openai_api_key) < 20:
-            logging.info("No valid OpenAI API key, using mock embeddings")
-            return await mock_provider.embed_texts(texts)
+            raise RuntimeError('OpenAI embedding provider is configured without a valid API key')
 
-        try:
-            from openai import OpenAI
-            client = OpenAI(api_key=self.openai_api_key)
-            response = client.embeddings.create(
-                input=texts,
-                model=self.model_name,
-            )
-            logging.info(f"Generated embeddings using {self.model_name}")
-            return [data.embedding for data in response.data]
-        except Exception as e:
-            logging.warning(f'OpenAI embedding API call failed ({e}), falling back to mock provider')
-            return await mock_provider.embed_texts(texts)
+        from openai import OpenAI
+        last_error: Exception | None = None
+        for attempt in range(settings.EMBEDDING_MAX_RETRIES):
+            try:
+                client = OpenAI(api_key=self.openai_api_key)
+                response = client.embeddings.create(input=texts, model=self.model_name)
+                logging.info(f"Generated embeddings using {self.model_name}")
+                return [data.embedding for data in response.data]
+            except Exception as error:
+                last_error = error
+                if attempt + 1 < settings.EMBEDDING_MAX_RETRIES:
+                    await asyncio.sleep(2 ** attempt)
+        raise RuntimeError(f'OpenAI embedding request failed: {last_error}') from last_error
 
     async def embed_query(self, query: str) -> list[float]:
         result = await self.embed_texts([query])
@@ -117,21 +115,25 @@ class OpenRouterEmbeddingProvider(EmbeddingProvider):
             self._dimension = 1536
 
     async def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        try:
-            from openai import OpenAI
-            client = OpenAI(
-                api_key=self.api_key,
-                base_url=self.base_url,
-            )
-            response = client.embeddings.create(
-                input=texts,
-                model=settings.EMBEDDING_MODEL,
-            )
-            logging.info(f"Generated {len(texts)} embeddings via OpenRouter using {settings.EMBEDDING_MODEL}")
-            return [data.embedding for data in response.data]
-        except Exception as e:
-            logging.error(f'OpenRouter embedding API call failed: {e}')
-            raise
+        if not self.api_key or len(self.api_key) < 20:
+            raise RuntimeError('OpenRouter embedding provider is configured without a valid API key')
+
+        from openai import OpenAI
+        last_error: Exception | None = None
+        for attempt in range(settings.EMBEDDING_MAX_RETRIES):
+            try:
+                client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+                response = client.embeddings.create(
+                    input=texts,
+                    model=settings.EMBEDDING_MODEL,
+                )
+                logging.info(f"Generated {len(texts)} embeddings via OpenRouter using {settings.EMBEDDING_MODEL}")
+                return [data.embedding for data in response.data]
+            except Exception as error:
+                last_error = error
+                if attempt + 1 < settings.EMBEDDING_MAX_RETRIES:
+                    await asyncio.sleep(2 ** attempt)
+        raise RuntimeError(f'OpenRouter embedding request failed: {last_error}') from last_error
 
     async def embed_query(self, query: str) -> list[float]:
         result = await self.embed_texts([query])

@@ -2,7 +2,6 @@ from typing import List, Optional
 from app.config import settings
 from app.services.vector_store import get_vector_store
 from app.services.embeddings import get_embedding_provider
-from app.schemas import Chunk
 
 
 class RetrievalError(Exception):

@@ -8,7 +8,7 @@ from app.schemas import Source, AskStatus
 GROUNDING_INSTRUCTION = """Answer the question using the supplied retrieved context from uploaded documents. Be helpful and provide information found in the context. If the specific question cannot be answered from the context, explain what information IS available in the documents and suggest related questions that can be answered. Only use the FALLBACK response if the context is completely empty or entirely unrelated to the question. Do not invent facts, quotations, or citations that aren't in the context."""
 
 
-FALLBACK_MESSAGE = """I don't have any uploaded documents that contain information about this topic. Please upload relevant documents first."""
+FALLBACK_MESSAGE = """I couldn't find information about this topic in the uploaded documents. Please upload a relevant document or ask about the available content."""
 
 
 class GenerationError(Exception):
@@ -116,17 +116,14 @@ class OpenRouterProvider(LLMProvider):
         super().__init__()
         self.api_key = settings.OPENROUTER_API_KEY or settings.OPENAI_API_KEY
         model = settings.LLM_MODEL
-        if not '/' in model:
+        if '/' not in model:
             self.model_name = f'openai/{model}'
         else:
             self.model_name = model
 
     async def generate(self, prompt: str, context: str, question: str) -> str:
-        mock_provider = MockLLMProvider()
-        # Check if key is valid (not empty, not too short)
         if not self.api_key or len(self.api_key) < 20:
-            logging.info("No valid OpenRouter/OpenAI key, using mock generation")
-            return await mock_provider.generate(prompt, context, question)
+            raise GenerationError('OpenRouter provider is configured without a valid API key')
 
         try:
             from openai import AsyncOpenAI
@@ -150,8 +147,8 @@ class OpenRouterProvider(LLMProvider):
             logging.info(f"Generated answer using {self.model_name}")
             return answer.strip()
         except Exception as e:
-            logging.warning(f'OpenRouter generation failed ({e}), falling back to mock provider')
-            return await mock_provider.generate(prompt, context, question)
+            logging.error(f'OpenRouter generation failed: {e}')
+            raise GenerationError('OpenRouter generation failed') from e
 
     async def generate_document_suggestions(self, filename: str, content: str) -> List[dict]:
         mock_provider = MockLLMProvider()
@@ -218,11 +215,8 @@ class OpenAIProvider(LLMProvider):
         self.api_key = settings.OPENAI_API_KEY
 
     async def generate(self, prompt: str, context: str, question: str) -> str:
-        mock_provider = MockLLMProvider()
-        # Check if key is valid
         if not self.api_key or len(self.api_key) < 20:
-            logging.info("No valid OpenAI key, using mock generation")
-            return await mock_provider.generate(prompt, context, question)
+            raise GenerationError('OpenAI provider is configured without a valid API key')
 
         try:
             from openai import AsyncOpenAI
@@ -239,8 +233,8 @@ class OpenAIProvider(LLMProvider):
             logging.info(f"Generated answer using {self.model_name or 'gpt-4o-mini'}")
             return answer.strip()
         except Exception as e:
-            logging.warning(f"OpenAI generation failed ({e}), falling back to mock provider")
-            return await mock_provider.generate(prompt, context, question)
+            logging.error(f'OpenAI generation failed: {e}')
+            raise GenerationError('OpenAI generation failed') from e
 
     async def generate_document_suggestions(self, filename: str, content: str) -> List[dict]:
         mock_provider = MockLLMProvider()
@@ -345,9 +339,19 @@ async def generate_answer(
     context_parts = []
     sources = []
 
+    seen_text: set[str] = set()
+    context_chars = 0
     for i, result in enumerate(retrieved_chunks):
         payload = result['payload']
         chunk_id = result['id']
+        chunk_text = payload.get('text', '').strip()
+        if not chunk_text or chunk_text in seen_text:
+            continue
+        remaining = settings.MAX_CONTEXT_CHARS - context_chars
+        if remaining <= 0:
+            break
+        chunk_text = chunk_text[:remaining]
+        seen_text.add(chunk_text)
 
         # Create source citation
         source = Source(
@@ -355,7 +359,7 @@ async def generate_answer(
             page_number=payload.get('page_number'),
             section_title=payload.get('section_title'),
             chunk_id=chunk_id,
-            excerpt=payload.get('text', '')[:300],
+            excerpt=chunk_text[:300],
         )
         sources.append(source)
 
@@ -367,8 +371,9 @@ async def generate_answer(
             source_info += f" · {source.section_title}"
 
         context_parts.append(
-            f"[Chunk {i+1}] {source_info}\n{payload.get('text', '')}"
+            f"[Chunk {len(sources)}] {source_info}\n{chunk_text}"
         )
+        context_chars += len(chunk_text)
 
     context = '\n\n'.join(context_parts)
     

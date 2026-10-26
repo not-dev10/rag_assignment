@@ -80,6 +80,7 @@ class ChunkMetadata(BaseModel):
     start_char: Optional[int] = None
     end_char: Optional[int] = None
     content_hash: str
+    document_content_hash: Optional[str] = None
 
 
 class Chunk(BaseModel):

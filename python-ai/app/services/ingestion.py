@@ -1,10 +1,10 @@
 import hashlib
 import uuid
-import os
 from pathlib import Path
 from typing import Optional, List
 import pypdf
 from markdown_it import MarkdownIt
+import tiktoken
 
 from app.config import settings
 
@@ -218,59 +218,57 @@ def chunk_text(
     chunk_size: int = None,
     chunk_overlap: int = None,
 ) -> List[str]:
-    """Split text into chunks with overlap, respecting paragraph/sentence boundaries.
-
-    Configurable CHUNK_SIZE (default 800) and CHUNK_OVERLAP (default 120).
-    No blank chunks are returned.
-    """
+    """Split text into token-bounded chunks at natural text boundaries."""
     if chunk_size is None:
         chunk_size = settings.CHUNK_SIZE
     if chunk_overlap is None:
         chunk_overlap = settings.CHUNK_OVERLAP
 
-    if len(text) <= chunk_size:
+    encoding = tiktoken.get_encoding('cl100k_base')
+    if len(encoding.encode(text)) <= chunk_size:
         return [text] if text.strip() else []
 
+    paragraphs = [part.strip() for part in text.split('\n\n') if part.strip()]
+    if not paragraphs:
+        return []
+
+    units: List[str] = []
+    for paragraph in paragraphs:
+        tokens = encoding.encode(paragraph)
+        if len(tokens) <= chunk_size:
+            units.append(paragraph)
+            continue
+        sentences = [part.strip() for part in __import__('re').split(r'(?<=[.!?])\s+', paragraph) if part.strip()]
+        for sentence in sentences:
+            sentence_tokens = encoding.encode(sentence)
+            if len(sentence_tokens) <= chunk_size:
+                units.append(sentence)
+                continue
+            for start in range(0, len(sentence_tokens), max(1, chunk_size - chunk_overlap)):
+                piece = encoding.decode(sentence_tokens[start:start + chunk_size]).strip()
+                if piece:
+                    units.append(piece)
+
     chunks: List[str] = []
-    start = 0
+    current: List[str] = []
+    current_tokens = 0
+    overlap_text = ''
+    for unit in units:
+        unit_tokens = len(encoding.encode(unit))
+        if current and current_tokens + unit_tokens > chunk_size:
+            chunk = '\n\n'.join(current).strip()
+            if chunk:
+                chunks.append(chunk)
+            overlap_tokens = encoding.encode(chunk)[-chunk_overlap:]
+            overlap_text = encoding.decode(overlap_tokens).strip()
+            current = [overlap_text] if overlap_text else []
+            current_tokens = len(overlap_tokens)
+        current.append(unit)
+        current_tokens += unit_tokens
 
-    while start < len(text):
-        end = min(start + chunk_size, len(text))
-
-        if end < len(text):
-            # Try to find a good break point (paragraph, then sentence)
-            paragraph_break = text.rfind('\n\n', start, end)
-            if paragraph_break != -1 and paragraph_break > start + chunk_size // 2:
-                end = paragraph_break + 2
-            else:
-                # Find sentence boundary
-                sentence_break = max(
-                    text.rfind('. ', start, end),
-                    text.rfind('! ', start, end),
-                    text.rfind('? ', start, end),
-                )
-                if sentence_break != -1 and sentence_break > start + chunk_size // 2:
-                    end = sentence_break + 2
-
-        chunk = text[start:end].strip()
-        if chunk:
-            chunks.append(chunk)
-
-        if end >= len(text):
-            break
-
-        # Move start forward with overlap, but not past zero
-        start = end - chunk_overlap
-        if start < 0:
-            start = 0
-
-        # Prevent endless loop: if we're not making progress
-        if start >= end:
-            # Take remaining text as final chunk
-            remaining = text[start:].strip()
-            if remaining and remaining not in chunks:
-                chunks.append(remaining)
-            break
+    final_chunk = '\n\n'.join(current).strip()
+    if final_chunk:
+        chunks.append(final_chunk)
 
     return chunks
 
@@ -285,7 +283,7 @@ def create_chunks(
     """Create chunks from extracted sections with metadata.
 
     Returns list of dicts with: chunk_id, text, chunk_index, document_id, filename,
-    content_hash, page_number (if available), section_title (if available),
+    content_hash, document_content_hash, page_number (if available), section_title (if available),
     start_char, end_char (offsets when available).
     """
     all_chunks: List[dict] = []
@@ -315,6 +313,7 @@ def create_chunks(
                 'document_id': document_id,
                 'filename': filename,
                 'content_hash': chunk_hash_val,
+                'document_content_hash': content_hash,
             }
 
             # Add metadata available from the section

@@ -28,12 +28,17 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = Field(default='./data/uploads')
 
     # Retrieval
-    TOP_K: int = Field(default=10)  # Increased from 4 to 10 for better context coverage
+    TOP_K: int = Field(default=5)
     SIMILARITY_THRESHOLD: Optional[float] = Field(default=None)
+    MAX_CONTEXT_CHARS: int = Field(default=12000)
 
     # Chunking
-    CHUNK_SIZE: int = Field(default=800)
-    CHUNK_OVERLAP: int = Field(default=120)
+    CHUNK_SIZE: int = Field(default=500)
+    CHUNK_OVERLAP: int = Field(default=100)
+
+    # Embeddings
+    EMBEDDING_BATCH_SIZE: int = Field(default=32)
+    EMBEDDING_MAX_RETRIES: int = Field(default=3)
 
     # Upload
     MAX_UPLOAD_MB: int = Field(default=10)

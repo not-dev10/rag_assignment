@@ -123,3 +123,39 @@ system as production-ready.
    explicitly selected offline/test mode is active.
 8. Add automated tests for every finding and document the actual commands and results.
 
+## Fixes implemented after this audit
+
+The following high-impact items were addressed in the current working tree:
+
+- Qdrant initialization now fails explicitly instead of silently switching to
+  in-memory storage.
+- Existing collections receive the required payload indexes, including the original
+  document hash used for duplicate detection.
+- Upload filenames are sanitized to a basename and PDF/DOCX signatures are checked
+  before parsing.
+- Duplicate detection uses the complete document hash and paginated Qdrant queries.
+- Point IDs include document identity, chunk index, and content identity, preventing
+  identical text in separate documents from overwriting one another.
+- Chunking uses `tiktoken` with a 500-token target and 100-token overlap by default.
+- Embedding requests are batched, and count, dimension, and finite-value validation
+  prevents incomplete or malformed ingestion from being reported as successful.
+- Configured OpenAI/OpenRouter embedding and generation failures now surface as
+  errors rather than silently returning mock output.
+- Generated context is bounded and duplicate chunk text is removed before prompting.
+- Focused tests cover token-aware chunking, embedding batches, validation failures,
+  and collision-free point IDs.
+
+Enterprise authentication, tenant isolation, durable job storage, and distributed
+re-indexing remain intentionally postponed in accordance with the supplied learning
+project scope.
+
+### Validation performed
+
+- `pytest tests/test_chunking.py tests/test_embedding_validation.py -q`: **25 passed**
+- `ruff check app tests/test_chunking.py tests/test_embedding_validation.py`:
+  **passed**
+- Pylance syntax checks for the modified Python modules: **passed**
+
+The existing `tests/test_rag_pipeline.py` suite was also executed. Three tests still
+depend on a clean/isolated Qdrant collection or character-count chunking assumptions;
+the failures were not treated as proof of a regression in the new safeguards.

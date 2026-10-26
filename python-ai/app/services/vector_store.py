@@ -1,5 +1,6 @@
 from typing import Optional, List
-import hashlib
+import math
+import uuid
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -57,14 +58,8 @@ class VectorStore:
 
             self._ensure_collection()
         except Exception as e:
-            logging.warning(
-                f'Failed to connect to configured Qdrant ({e}), falling back to in-memory Qdrant'
-            )
-            try:
-                self.client = QdrantClient(location=':memory:')
-                self._ensure_collection()
-            except Exception as inner_e:
-                raise VectorStoreError(f'Failed to initialize Qdrant: {inner_e}')
+            self.client = None
+            raise VectorStoreError(f'Failed to initialize configured Qdrant: {e}') from e
 
     def _ensure_collection(self) -> None:
         """Create collection if it doesn't exist, or validate existing one."""
@@ -81,6 +76,7 @@ class VectorStore:
                     f'Collection dimension mismatch: expected {expected_dim}, got {existing_dim}. '
                     f'Recreate collection or use matching embedding model.'
                 )
+            self._ensure_payload_indexes()
         except UnexpectedResponse as e:
             if e.status_code == 404:
                 self._create_collection()
@@ -107,16 +103,21 @@ class VectorStore:
             ),
         )
 
-        # Create payload indexes for common filter fields (local Qdrant logs a harmless warning)
-        for field in ['document_id', 'filename', 'content_hash']:
+        self._ensure_payload_indexes()
+
+    def _ensure_payload_indexes(self) -> None:
+        """Ensure filters used by the application are indexed on existing collections too."""
+        if self.client is None:
+            raise VectorStoreError('Client not connected')
+        for field in ['document_id', 'filename', 'content_hash', 'document_content_hash']:
             try:
                 self.client.create_payload_index(
                     collection_name=self.collection_name,
                     field_name=field,
                     field_schema='keyword',
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                raise VectorStoreError(f'Failed to create payload index for {field}: {e}') from e
 
     async def upsert_chunks(self, chunks: List[Chunk]) -> int:
         """Upsert chunks into Qdrant. Returns count of upserted points."""
@@ -126,62 +127,75 @@ class VectorStore:
         if not chunks:
             return 0
 
-        texts = [chunk['text'] if isinstance(chunk, dict) else chunk.text for chunk in chunks]
-        res = self.embedding_provider.embed_texts(texts)
-        import inspect
-        if inspect.isawaitable(res):
-            embeddings = await res
-        else:
-            embeddings = res
-
         points = []
-        import uuid
-        for chunk, embedding in zip(chunks, embeddings):
-            if isinstance(chunk, dict):
-                text = chunk.get('text', '')
-                doc_id = chunk.get('document_id')
-                fn = chunk.get('filename')
-                c_idx = chunk.get('chunk_index', 0)
-                c_hash = chunk.get('content_hash')
-                page_no = chunk.get('page_number')
-                sec_title = chunk.get('section_title')
-                start_c = chunk.get('start_char')
-                end_c = chunk.get('end_char')
-            else:
-                text = chunk.text
-                doc_id = chunk.metadata.document_id
-                fn = chunk.metadata.filename
-                c_idx = chunk.metadata.chunk_index
-                c_hash = chunk.metadata.content_hash
-                page_no = chunk.metadata.page_number
-                sec_title = chunk.metadata.section_title
-                start_c = chunk.metadata.start_char
-                end_c = chunk.metadata.end_char
+        batch_size = max(1, settings.EMBEDDING_BATCH_SIZE)
+        for batch_start in range(0, len(chunks), batch_size):
+            batch = chunks[batch_start:batch_start + batch_size]
+            texts = [chunk['text'] if isinstance(chunk, dict) else chunk.text for chunk in batch]
+            embeddings = await self.embedding_provider.embed_texts(texts)
+            if len(embeddings) != len(batch):
+                raise VectorStoreError(
+                    f'Embedding count mismatch: expected {len(batch)}, got {len(embeddings)}'
+                )
 
-            payload = {
-                'document_id': doc_id,
-                'filename': fn,
-                'chunk_index': c_idx,
-                'text': text,
-                'content_hash': c_hash,
-            }
-            if page_no is not None:
-                payload['page_number'] = page_no
-            if sec_title is not None:
-                payload['section_title'] = sec_title
-            if start_c is not None:
-                payload['start_char'] = start_c
-            if end_c is not None:
-                payload['end_char'] = end_c
+            for chunk, embedding in zip(batch, embeddings):
+                if len(embedding) != self.embedding_provider.dimension:
+                    raise VectorStoreError(
+                        f'Embedding dimension mismatch: expected {self.embedding_provider.dimension}, got {len(embedding)}'
+                    )
+                if not all(math.isfinite(value) for value in embedding):
+                    raise VectorStoreError('Embedding contains non-finite values')
+                if isinstance(chunk, dict):
+                    text = chunk.get('text', '')
+                    doc_id = chunk.get('document_id')
+                    fn = chunk.get('filename')
+                    c_idx = chunk.get('chunk_index', 0)
+                    c_hash = chunk.get('content_hash')
+                    doc_hash = chunk.get('document_content_hash')
+                    page_no = chunk.get('page_number')
+                    sec_title = chunk.get('section_title')
+                    start_c = chunk.get('start_char')
+                    end_c = chunk.get('end_char')
+                else:
+                    text = chunk.text
+                    doc_id = chunk.metadata.document_id
+                    fn = chunk.metadata.filename
+                    c_idx = chunk.metadata.chunk_index
+                    c_hash = chunk.metadata.content_hash
+                    doc_hash = getattr(chunk.metadata, 'document_content_hash', None)
+                    page_no = chunk.metadata.page_number
+                    sec_title = chunk.metadata.section_title
+                    start_c = chunk.metadata.start_char
+                    end_c = chunk.metadata.end_char
 
-            # Deterministic valid UUID point ID from MD5 digest
-            point_id = str(uuid.UUID(hashlib.md5(text.encode()).hexdigest()))
+                payload = {
+                    'document_id': doc_id,
+                    'filename': fn,
+                    'chunk_index': c_idx,
+                    'text': text,
+                    'content_hash': c_hash,
+                    'document_content_hash': doc_hash,
+                    'embedding_model': self.embedding_provider.model_name,
+                }
+                if page_no is not None:
+                    payload['page_number'] = page_no
+                if sec_title is not None:
+                    payload['section_title'] = sec_title
+                if start_c is not None:
+                    payload['start_char'] = start_c
+                if end_c is not None:
+                    payload['end_char'] = end_c
 
-            points.append(PointStruct(
-                id=point_id,
-                vector=embedding,
-                payload=payload,
-            ))
+                point_id = str(uuid.uuid5(
+                    uuid.NAMESPACE_URL,
+                    f'{doc_id}:{c_idx}:{doc_hash or c_hash}',
+                ))
+
+                points.append(PointStruct(
+                    id=point_id,
+                    vector=embedding,
+                    payload=payload,
+                ))
 
         self.client.upsert(
             collection_name=self.collection_name,
@@ -195,8 +209,6 @@ class VectorStore:
         if self.client is None:
             raise VectorStoreError('Client not connected')
 
-        from qdrant_client.models import PointIdsList
-
         filter_doc = Filter(
             must=[
                 FieldCondition(
@@ -207,28 +219,80 @@ class VectorStore:
         )
 
         try:
-            scroll_res = self.client.scroll(
-                collection_name=self.collection_name,
-                scroll_filter=filter_doc,
-                limit=1000,
-                with_payload=False,
-                with_vectors=False,
-            )
-            matching = scroll_res[0]
-            if not matching:
-                return 0
-            ids = [p.id for p in matching]
-            self.client.delete(
-                collection_name=self.collection_name,
-                points_selector=PointIdsList(points=ids),
-            )
-            return len(ids)
-        except Exception:
+            count = 0
+            offset = None
+            while True:
+                matching, offset = self.client.scroll(
+                    collection_name=self.collection_name,
+                    scroll_filter=filter_doc,
+                    limit=1000,
+                    offset=offset,
+                    with_payload=False,
+                    with_vectors=False,
+                )
+                count += len(matching)
+                if offset is None:
+                    break
             self.client.delete(
                 collection_name=self.collection_name,
                 points_selector=filter_doc,
             )
-            return 1
+            return count
+        except Exception as error:
+            raise VectorStoreError(f'Failed to delete document {document_id}: {error}') from error
+
+    def find_document_by_content_hash(self, content_hash: str) -> Optional[dict]:
+        """Find a complete document using its original file hash."""
+        if self.client is None:
+            raise VectorStoreError('Client not connected')
+        query_filter = Filter(
+            must=[
+                FieldCondition(
+                    key='document_content_hash',
+                    match=MatchValue(value=content_hash),
+                )
+            ]
+        )
+        points, _ = self.client.scroll(
+            collection_name=self.collection_name,
+            scroll_filter=query_filter,
+            limit=1,
+            with_payload=True,
+            with_vectors=False,
+        )
+        if not points or not points[0].payload:
+            return None
+        payload = points[0].payload
+        document_id = payload.get('document_id')
+        if not document_id:
+            return None
+
+        count = 0
+        offset = None
+        while True:
+            page, offset = self.client.scroll(
+                collection_name=self.collection_name,
+                scroll_filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key='document_id',
+                            match=MatchValue(value=document_id),
+                        )
+                    ]
+                ),
+                limit=1000,
+                offset=offset,
+                with_payload=False,
+                with_vectors=False,
+            )
+            count += len(page)
+            if offset is None:
+                break
+        return {
+            'document_id': document_id,
+            'filename': payload.get('filename', 'unknown'),
+            'chunk_count': count,
+        }
 
     def search(
         self,

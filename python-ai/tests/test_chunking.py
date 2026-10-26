@@ -1,6 +1,6 @@
 """Python unit tests for chunking and metadata preservation (Milestone 3)."""
 
-import pytest
+import tiktoken
 from app.services.ingestion import (
     chunk_text,
     create_chunks,
@@ -30,12 +30,12 @@ class TestChunkText:
 
     def test_text_longer_than_chunk_size(self):
         """Text exceeding CHUNK_SIZE should be split."""
-        text = "Sentence one. " * 200  # ~1300 characters
-        chunks = chunk_text(text)
+        text = "Sentence one. " * 400  # More than 500 cl100k_base tokens
+        chunks = chunk_text(text, chunk_size=500, chunk_overlap=100)
         assert len(chunks) > 1
-        # Each chunk should be approximately CHUNK_SIZE
+        encoding = tiktoken.get_encoding('cl100k_base')
         for chunk in chunks:
-            assert len(chunk) <= 800  # CHUNK_SIZE
+            assert len(encoding.encode(chunk)) <= 500
 
     def test_overlap_present(self):
         """Overlap between consecutive chunks should be present."""
@@ -53,15 +53,14 @@ class TestChunkText:
         chunks = chunk_text(text)
         assert all(chunk.strip() for chunk in chunks)
 
-    def test_chunk_size_default_800(self):
-        """Default chunk_size should be 800."""
-        chunks = chunk_text("A" * 900)  # Longer than default 800
+    def test_chunk_size_default_500_tokens(self):
+        """Default chunk_size should be 500 tokens."""
+        chunks = chunk_text("word " * 600, chunk_size=500, chunk_overlap=100)
         assert len(chunks) >= 2
 
-    def test_chunk_overlap_default_120(self):
-        """Default chunk_overlap should be 120."""
-        # With text longer than 800+120, overlap should be present
-        chunks = chunk_text("A" * 1000)
+    def test_chunk_overlap_default_100(self):
+        """Default chunk_overlap should be 100 tokens."""
+        chunks = chunk_text("word " * 700, chunk_size=500, chunk_overlap=100)
         assert len(chunks) > 1
 
 
@@ -158,7 +157,6 @@ class TestExtractText:
         """PDF extraction should return sections with page numbers."""
         # This test verifies the function signature/behavior
         # Actual PDF testing would require a real PDF file
-        from pathlib import Path
         # Just verify the function exists and has correct signature
         assert callable(extract_text_from_pdf)
 
@@ -174,8 +172,6 @@ class TestExtractText:
         """extract_text should dispatch to correct extractor by MIME type."""
         from pathlib import Path
         import tempfile
-        import os
-
         # Create a temp text file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
             f.write("Hello world")
@@ -219,6 +215,6 @@ class TestEdgeCases:
 
     def test_just_over_boundary(self):
         """Text just over chunk boundary should split."""
-        text = "A" * 801
-        chunks = chunk_text(text)
+        text = "word " * 11
+        chunks = chunk_text(text, chunk_size=10, chunk_overlap=2)
         assert len(chunks) >= 2
